@@ -24,8 +24,9 @@ class Command(BaseCommand):
         apps = settings.INSTALLED_APPS
         for app in apps:
             try:
+                print (app + ".joms")
                 #import all the JOM classes
-                __import__(app + ".joms")
+                __import__(app + ".joms", globals={}, locals={}, fromlist=[], level=-1)
             except ImportError:
                 pass
             
