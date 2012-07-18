@@ -11,7 +11,7 @@ from django.db.models.fields.files import FileField
 class JomFactory(object):
     """ Stores all the JomEntry
     """
-    __instence = None
+    __instance = None
     entries = []
     
     def register(self, entry):
@@ -25,9 +25,9 @@ class JomFactory(object):
 
     @classmethod
     def default(cls):
-        if cls.instance == None:
-            cls.instance = JomFactory()
-        return cls.instance
+        if cls.__instance == None:
+            cls.__instance = JomFactory()
+        return cls.__instance
     
     def getForModel(self, model):
         for entry in self.entries:
