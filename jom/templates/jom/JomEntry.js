@@ -6,11 +6,11 @@
  */
 {{ clazz }} = function(config) {
 	/* Fields */{% for field in fields %}
-		this.{{ field.name }} = {{ field.defaultValue }};{% endfor %}
+	this.{{ field.name }} = {{ field.defaultValue }};{% endfor %}
 	
 	init = function(config) {
 		{% for field in fields %}
-			this.{{ field.name }} = config[{{ field.name }}];{% endfor %}
+		this.{{ field.name }} = config[{{ field.name }}];{% endfor %}
 	};
 	init(config);
 };
