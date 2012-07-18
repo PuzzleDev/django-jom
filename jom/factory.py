@@ -4,7 +4,6 @@ Created on Jul 18, 2012
 @author: Michele Sama (m.sama@puzzledev.com)
 '''
 from django.db import models
-from _pydev_inspect import isclass
 from django.template.loader import render_to_string
 from django.db.models.fields.files import FileField
 
@@ -66,11 +65,6 @@ class JomEntry(object):
             # model cannot be null
             raise AssertionError(
                     "Model cannot be null.")
-        elif not isclass(self.model):
-            # model should be a class
-            raise AssertionError(
-                    "Given argument %s is not a class."
-                    % self.model)
         elif not issubclass(self.model, models.Model):
             # model should be a subclass of Model
             raise AssertionError(
