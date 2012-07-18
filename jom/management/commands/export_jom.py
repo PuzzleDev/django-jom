@@ -24,9 +24,9 @@ class Command(BaseCommand):
         apps = settings.INSTALLED_APPS
         for app in apps:
             try:
-                print (app + ".joms")
                 #import all the JOM classes
                 __import__(app + ".joms", globals={}, locals={}, fromlist=[], level=-1)
+                print("Importing: " + app + ".joms")
             except ImportError:
                 pass
             
@@ -34,6 +34,7 @@ class Command(BaseCommand):
         ensure_dir(folder)
         
         for entry in factory.entries:
+            print("Writing fiel for " + entry.__name__)
             filename = os.path.join(folder, entry.model + ".js").replace("\\","/")
             out_file = open(filename,"w")
             out_file.write(entry.renderClass())
