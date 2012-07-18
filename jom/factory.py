@@ -21,13 +21,11 @@ class JomFactory(object):
             raise AssertionError(
                     "JomEntry %s was already registered" % entry) 
 
-    
-
     @classmethod
     def default(cls):
         if cls.__instance == None:
             cls.__instance = JomFactory()
-        return cls.__instance
+        return cls.__instance        
     
     def getForModel(self, model):
         for entry in self.entries:
@@ -39,8 +37,6 @@ class JomFactory(object):
     def getForInstance(self, instance):
         model = instance.__class__
         return self.getForModel(model)
-    
-    
         
 
 class JomEntry(object):

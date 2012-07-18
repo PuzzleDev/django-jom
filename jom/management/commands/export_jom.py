@@ -21,6 +21,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         factory = JomFactory.default()
         
+        apps = settings.INSTALLED_APPS
+        for app in apps:
+            try:
+                #import all the JOM classes
+                __import__(app + ".joms")
+            except ImportError:
+                pass
+            
         folder = os.path.join(settings.MEDIA_ROOT, "jom/").replace("\\","/")
         ensure_dir(folder)
         
