@@ -77,22 +77,22 @@ class JomEntry(object):
         """ Creates 
         """
         dictionary = {
-                'clazz': self.__class__,
+                'clazz': self.__class__.__name__,
                 'include': self.include}
         
         fields = [x
             for x in self.model._meta.fields
-            if x.name in self.fields]
+            if x in self.fields]
         
         field_list = []
         for field in fields:
             field_list.append({
                 'name': field.name,
-                'defaultValue': field.default
+                'defaultValue': "null"
                 });
         
         dictionary['fields'] = field_list
-        return render_to_string(self.template, dictionary)
+        return render_to_string(self.template, dictionary = dictionary)
 
 
     def renderInstance(self, instance,
@@ -103,10 +103,10 @@ class JomEntry(object):
                     "%s instance is not an instance of %s." %
                     (instance, self.model))
             
-        dictionary = {'clazz': self.__class__,}
+        dictionary = {'clazz': self.__class__.__name__,}
         field_values = {}
         for field in self.fields:
-            field_instance = self.model._meta.fields[field]
+            field_instance = getattr(field, self.model)
             if isinstance(field_instance, FileField):
                 if field_instance.name != None:
                     field_values[field] = field_instance.url

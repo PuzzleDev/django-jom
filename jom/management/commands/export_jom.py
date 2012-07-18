@@ -33,11 +33,11 @@ class Command(BaseCommand):
         folder = os.path.join(settings.MEDIA_ROOT, "jom/").replace("\\","/")
         ensure_dir(folder)
         
-        for entry in factory.entries:
-            print("Writing fiel for " + entry.__name__)
-            filename = os.path.join(folder, entry.model + ".js").replace("\\","/")
+        for jomClass in factory.entries:
+            print("Writing " + jomClass.__name__)
+            filename = os.path.join(folder, jomClass.__name__ + ".js").replace("\\","/")
             out_file = open(filename,"w")
-            out_file.write(entry.renderClass())
+            out_file.write(jomClass().renderClass())
             out_file.close()
         
             
