@@ -20,12 +20,12 @@
 
 {% for field in fields %}
 /* Get {{ field.name }} */
-{{ clazz }}.prototype.get_{{ field.name }} = function() {
+{{ clazz }}.prototype.get{{ field.name|capfirst }} = function() {
 	return this.fields['{{ field.name }}'];
 };
 
 /* Set {{ field.name }} */
-{{ clazz }}.prototype.set_{{ field.name }} = function(value) {
+{{ clazz }}.prototype.set{{ field.name|capfirst }} = function(value) {
 	this.fields['{{ field.name }}'] = value;
 };
 {% endfor %}

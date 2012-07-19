@@ -7,6 +7,8 @@ from django.conf import settings
 from django.db.models.fields.files import FileField
 from django.db import models
 from django.template.loader import render_to_string
+from django.db.models.fields import CharField
+from django.db.models.fields.related import ForeignKey, ManyToManyField
 
 
 class JomFactory(object):
@@ -120,10 +122,18 @@ class JomEntry(object):
             if isinstance(field, FileField):
                 if field_value.name != None:
                     field_values[field_name] = field_value.url
+            elif isinstance(field, CharField):
+                field_values[field_name] = field_value
+            elif isinstance(field, ForeignKey):
+                # TODO(msama): handle FK and M2M
+                field_values[field_name] = "%s" % field_value
+            elif isinstance(field, ManyToManyField):
+                # TODO(msama): handle FK and M2M
+                field_values[field_name] = "%s" % field_value
             else:
                 if field_value:
                     field_values[field_name] = field_value
-            # TODO(msama): handle FK and M2M
+            
         dictionary['fields'] = field_values
         
         return dictionary
