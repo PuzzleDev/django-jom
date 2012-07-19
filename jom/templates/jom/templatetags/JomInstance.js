@@ -1,3 +1,2 @@
-var {{ jsVarName }} = {{ config.clazz }}({{{% for key, values in config.fields.items %}
-	'{{ key }}': {{ value }}{{ if foorloop.last }},{{ endif }}
-{% endfor %}}});
+var {{ jsVarName }} = {{ config.clazz }}({{% for key, value in config.fields.items %}
+	'{{ key }}': {{ value }}{% if not forloop.last %},{% endif %}{% endfor %}});

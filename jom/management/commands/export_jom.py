@@ -19,17 +19,9 @@ class Command(BaseCommand):
     help = 'Removes all the uploaded files which are not saved in the database'
 
     def handle(self, *args, **options):
+        JomFactory.registerAll()
         factory = JomFactory.default()
         
-        apps = settings.INSTALLED_APPS
-        for app in apps:
-            try:
-                #import all the JOM classes
-                __import__(app + ".joms", globals={}, locals={}, fromlist=[], level=-1)
-                print("Importing: " + app + ".joms")
-            except ImportError:
-                pass
-            
         folder = os.path.join(settings.MEDIA_ROOT, "jom/").replace("\\","/")
         ensure_dir(folder)
         

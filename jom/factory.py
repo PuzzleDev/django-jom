@@ -3,20 +3,21 @@ Created on Jul 18, 2012
 
 @author: Michele Sama (m.sama@puzzledev.com)
 '''
+from django.conf import settings
+from django.db.models.fields.files import FileField
 from django.db import models
 from django.template.loader import render_to_string
-from django.db.models.fields.files import FileField
 
 
 class JomFactory(object):
     """ Stores all the JomEntry
     """
     __instance = None
-    entries = []
+    entries = {}
     
     def register(self, entry):
-        if entry not in self.entries:
-            self.entries.append(entry)
+        if not self.entries.has_key(entry.model):
+            self.entries[entry.model] = entry
         else:
             raise AssertionError(
                     "JomEntry %s was already registered" % entry) 
@@ -27,16 +28,25 @@ class JomFactory(object):
             cls.__instance = JomFactory()
         return cls.__instance        
     
+    @classmethod
+    def autodiscover(cls):
+        apps = settings.INSTALLED_APPS
+        for app in apps:
+            try:
+                #import all the JOM classes
+                __import__(app + ".joms", globals={},
+                        locals={}, fromlist=[], level=-1)
+                print("[JOM] Importing: " + app + ".joms")
+            except ImportError, ex:
+                print("[JOM] Import error: %s " % ex)
+    
     def getForModel(self, model):
-        for entry in self.entries:
-            if entry.model == model:
-                return entry
-        raise AssertionError(
-                "%s instance is not registered." % model)
+        jomEntry = self.entries[model]
+        if jomEntry:
+            return jomEntry()
     
     def getForInstance(self, instance):
-        model = instance.__class__
-        return self.getForModel(model)
+        return self.getForModel(instance.__class__)
         
 
 class JomEntry(object):
@@ -105,14 +115,15 @@ class JomEntry(object):
         dictionary = {'clazz': self.__class__.__name__,}
         field_values = {}
         for field in self.fields:
-            field_instance = getattr(field, self.model)
-            if isinstance(field_instance, FileField):
-                if field_instance.name != None:
-                    field_values[field] = field_instance.url
-                else:
-                    field_values[field] = ""
+            field_name = field.name
+            field_value = getattr(instance, field_name)
+            if isinstance(field, FileField):
+                if field_value.name != None:
+                    field_values[field_name] = field_value.url
             else:
-                field_values[field] = field_instance.value
+                if field_value:
+                    field_values[field_name] = field_value
+            # TODO(msama): handle FK and M2M
         dictionary['fields'] = field_values
         
         return dictionary
