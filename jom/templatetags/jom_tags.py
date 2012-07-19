@@ -11,6 +11,12 @@ register = template.Library()
  
 @register.inclusion_tag('jom/templatetags/JomInstance.js',
         takes_context = False)
-def jom_instance(instance):
+def jom_instance(instance, jsVarName):
+    """ Creates a javascript representation of the
+        given model instance and saves it in a 
+        javascript variable with the given jsVarName
+    """
+    
     jomEntry = JomFactory.default().getForInstance
-    return {'config': jomEntry.renderInstance(instance)}
+    return {'jsVarName': jsVarName,
+            'config': jomEntry.renderInstance(instance)}

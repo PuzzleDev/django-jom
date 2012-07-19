@@ -95,8 +95,7 @@ class JomEntry(object):
         return render_to_string(self.template, dictionary = dictionary)
 
 
-    def renderInstance(self, instance,
-            template = "jom/JomInstance.js"):
+    def instanceToDict(self, instance):
         if not isinstance(instance, self.model):
             # model cannot be null
             raise AssertionError(
@@ -116,6 +115,6 @@ class JomEntry(object):
                 field_values[field] = field_instance.value
         dictionary['fields'] = field_values
         
-        return render_to_string(template, dictionary)
+        return dictionary
         
         
