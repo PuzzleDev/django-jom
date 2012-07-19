@@ -17,6 +17,6 @@ def jom_instance(instance, jsVarName):
         javascript variable with the given jsVarName
     """
     
-    jomEntry = JomFactory.default().getForInstance(instance)
+    jomInstance = JomFactory.default().getJomInstance(instance)
     return {'jsVarName': jsVarName,
-            'config': jomEntry.instanceToDict(instance)}
+            'config': jomInstance.toDict()}
