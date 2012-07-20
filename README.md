@@ -1,3 +1,5 @@
+# django-jom
+
 django-jom (Django Javascript Object Model) is a Django based library to extract Javascript objects from data models.
 
 # The base idea
