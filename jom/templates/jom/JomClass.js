@@ -54,7 +54,11 @@
 	return jom;
 }
 
-{{ clazz }}Factory.prototype.asynchCreate = function(instanceId, successCallback, errorCallback) {
+{{ clazz }}Factory.prototype.asynchGet = function(instanceId, successCallback, errorCallback) {
+	// TODO(msama): not implemented yet.
+}
+
+{{ clazz }}Factory.prototype.asynchCreate = function(successCallback, errorCallback) {
 	// TODO(msama): not implemented yet.
 }
 
