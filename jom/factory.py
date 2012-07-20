@@ -62,10 +62,18 @@ class JomFactory(object):
         
 
 class JomDescriptor(object):
+    """ Describe a Jom node.
+        Developers have to override this class
+        with all the models that they want
+        to export.
+        
+        TODO(msama): add read only fields.
+    """
     model = None
     fields = None
     exclude = None
     include = None
+    
 
 
 class JomEntry(object):
