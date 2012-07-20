@@ -3,23 +3,30 @@ Created on Jul 18, 2012
 
 @author: Michele Sama (m.sama@puzzledev.com)
 '''
+from django.conf import settings
+from django.db.models.fields.files import FileField
 from django.db import models
 from django.template.loader import render_to_string
-from django.db.models.fields.files import FileField
+from django.db.models.fields import CharField, IntegerField, FloatField,\
+    NullBooleanField, DateTimeField, TimeField, AutoField, BooleanField
+from django.db.models.fields.related import ForeignKey, ManyToManyField
+from numpy.oldnumeric.random_array import ArgumentError
+from django.template.base import Template
+from django.template.context import Context
 
 
 class JomFactory(object):
     """ Stores all the JomEntry
     """
     __instance = None
-    entries = []
+    descriptors = {}
     
-    def register(self, entry):
-        if entry not in self.entries:
-            self.entries.append(entry)
+    def register(self, descriptor):
+        if not self.descriptors.has_key(descriptor.model):
+            self.descriptors[descriptor.model] = descriptor
         else:
             raise AssertionError(
-                    "JomEntry %s was already registered" % entry) 
+                    "JomEntry %s was already registered" % descriptor) 
 
     @classmethod
     def default(cls):
@@ -27,57 +34,77 @@ class JomFactory(object):
             cls.__instance = JomFactory()
         return cls.__instance        
     
-    def getForModel(self, model):
-        for entry in self.entries:
-            if entry.model == model:
-                return entry
-        raise AssertionError(
-                "%s instance is not registered." % model)
+    @classmethod
+    def autodiscover(cls):
+        apps = settings.INSTALLED_APPS
+        for app in apps:
+            try:
+                #import all the JOM classes
+                __import__(app + ".joms", globals={},
+                        locals={}, fromlist=[], level=-1)
+                print("[JOM] Importing: " + app + ".joms")
+            except ImportError, ex:
+                print("[JOM] Import error: %s " % ex)
     
-    def getForInstance(self, instance):
-        model = instance.__class__
-        return self.getForModel(model)
+    def getForModel(self, model):
+        descriptor = self.descriptors[model]
+        if not descriptor:
+            raise AssertionError(
+                "Model was not registered: %s." % model)
+        return descriptor
+    
+    def getJomInstance(self, instance):
+        return JomInstance(
+                self.getForModel(instance.__class__), instance)
+        
+    def getJomClass(self, model):
+        return JomClass(self.getForModel(model))
         
 
-class JomEntry(object):
-    """ Converts a Model into a javascript object
-    
-        For each model that you want to export you should do
+class JomDescriptor(object):
+    """ Describe a Jom node.
+        Developers have to override this class
+        with all the models that they want
+        to export.
         
-        FooJomEntry(JomEntry):
-            model = Foo
-            fields = ['foo', 'bar']
-            
-        JomFactory.default().register(FooJomEntry)
+        TODO(msama): add read only fields.
     """
     model = None
     fields = None
     exclude = None
-    template = "jom/JomEntry.js"
     include = None
     
-    def __init__(self):
-        if self.model == None:
+
+
+class JomEntry(object):
+    def __init__(self, descriptor, factory = JomFactory.default()):
+        if descriptor.model == None:
             # model cannot be null
             raise AssertionError(
                     "Model cannot be null.")
-        elif not issubclass(self.model, models.Model):
+        elif not issubclass(descriptor.model, models.Model):
             # model should be a subclass of Model
             raise AssertionError(
                     "Given class %s is not a Model."
-                    % self.model)
+                    % descriptor.model)
+        self.model = descriptor.model    
             
-        if self.fields == None:
+        if descriptor.fields == None:
             self.fields = self.model._meta.fields
-        if self.exclude != None:
-            self.fields -= self.exclude
+        if descriptor.exclude != None:
+            self.fields -= descriptor.exclude
+        
+        self.include = descriptor.include
+        self.descriptor = descriptor
+        self.factory = factory
 
 
+class JomClass(JomEntry):
+    template = "jom/JomClass.js"
+    
     def renderClass(self):
-        """ Creates 
-        """
         dictionary = {
-                'clazz': self.__class__.__name__,
+                'clazz': self.descriptor.__name__,
                 'include': self.include}
         
         fields = [x
@@ -94,27 +121,69 @@ class JomEntry(object):
         dictionary['fields'] = field_list
         return render_to_string(self.template, dictionary = dictionary)
 
+    
 
-    def instanceToDict(self, instance):
+class JomInstance(JomEntry):
+    
+    def __init__(self, descriptor, instance,
+            factory = JomFactory.default()):
+        super(JomInstance, self).__init__(descriptor, factory)
         if not isinstance(instance, self.model):
             # model cannot be null
             raise AssertionError(
                     "%s instance is not an instance of %s." %
                     (instance, self.model))
-            
-        dictionary = {'clazz': self.__class__.__name__,}
-        field_values = {}
+        self.instance = instance
+        
+    
+    def toDict(self):
+        from jom import fields as jomFields
+        dictionary = {'clazz': self.descriptor.__name__,}
+        jom_fields = {}
         for field in self.fields:
-            field_instance = getattr(field, self.model)
-            if isinstance(field_instance, FileField):
-                if field_instance.name != None:
-                    field_values[field] = field_instance.url
-                else:
-                    field_values[field] = ""
+            field_name = field.name
+            field_value = getattr(self.instance, field_name)
+            #if not field_value:
+            #    continue
+            
+            if isinstance(field, FileField):
+                # File field
+                if field_value.name != None:
+                    jom_fields[field_name] =\
+                            jomFields.UrlJomField(field_name, field_value.url, self.factory)
+            elif isinstance(field, (BooleanField, NullBooleanField)):
+                # Boolean field
+                jom_fields[field_name] =\
+                        jomFields.BooleanJomField(field_name, field_value, self.factory)
+            elif isinstance(field, CharField):
+                # Char field
+                jom_fields[field_name] =\
+                        jomFields.StringJomField(field_name, field_value, self.factory)
+            elif isinstance(field, ForeignKey):
+                # TODO(msama): handle FK and M2M
+                jom_fields[field_name] =\
+                        jomFields.ForeignKeyJomField(field_name, field_value, self.factory)
+            elif isinstance(field, ManyToManyField):
+                # TODO(msama): handle FK and M2M
+                jom_fields[field_name] =\
+                        jomFields.StringJomField(field_name, field_value.__str__(), self.factory)
+            elif isinstance(field, (AutoField, IntegerField, FloatField)):
+                # Numeral field    
+                jom_fields[field_name] =\
+                        jomFields.NumeralJomField(field_name, field_value, self.factory)
+            elif isinstance(field, (DateTimeField, TimeField, DateTimeField)):
+                # Numeral field
+                jom_fields[field_name] =\
+                        jomFields.DateJomField(field_name, field_value, self.factory)
             else:
-                field_values[field] = field_instance.value
-        dictionary['fields'] = field_values
-        
+                raise ArgumentError("Field not handled: %s." % field)
+            
+        dictionary['fields'] = jom_fields
         return dictionary
-        
-        
+
+    
+    def toJavascript(self):
+        t = Template("{{% for key, jomField in fields.items %}\n" +
+                     "'{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")
+        c = Context(self.toDict())
+        return t.render(c)

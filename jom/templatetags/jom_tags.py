@@ -8,15 +8,15 @@ from django import template
 from jom.factory import JomFactory
 
 register = template.Library()
- 
-@register.inclusion_tag('jom/templatetags/JomInstance.js',
-        takes_context = False)
-def jom_instance(instance, jsVarName):
-    """ Creates a javascript representation of the
-        given model instance and saves it in a 
-        javascript variable with the given jsVarName
-    """
     
-    jomEntry = JomFactory.default().getForInstance
-    return {'jsVarName': jsVarName,
-            'config': jomEntry.renderInstance(instance)}
+@register.inclusion_tag('jom/templatetags/JomDict.js',
+        takes_context = False)
+def jom_dict(instance):
+    """ Creates an associative array which can
+        initialize a JomInstance.
+    """
+    jomInstance = JomFactory.default().getJomInstance(instance)
+    if not jomInstance:
+        raise AssertionError(
+                "Model not registered: %s" % instance.__class__)
+    return {'jomInstance': jomInstance}
