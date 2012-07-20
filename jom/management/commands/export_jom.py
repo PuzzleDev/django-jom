@@ -31,7 +31,7 @@ class Command(BaseCommand):
             # setting the JOM_ROOT variable and adding it to
             # settings.STATICFILES_DIRS
             base_path = settings.JOM_ROOT
-        folder = os.path.join(base_path, "js/jom/entries").replace("\\","/")
+        folder = os.path.join(base_path, "js/jom/descriptors").replace("\\","/")
         
         for model, jomDescriptor in factory.descriptors.items():
             # get the django module name

@@ -19,4 +19,4 @@ def jom_instance(instance, jsVarName):
     
     jomInstance = JomFactory.default().getJomInstance(instance)
     return {'jsVarName': jsVarName,
-            'config': jomInstance.toDict()}
+            'jomInstance': jomInstance}

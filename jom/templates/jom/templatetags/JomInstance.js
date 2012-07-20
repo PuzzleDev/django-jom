@@ -1,2 +1,2 @@
 {% load jom_tags %}
-var {{ jsVarName }} = {{ config.clazz.toJavascript }};
+var {{ jsVarName }} = {{ jomInstance.toJavascript }};

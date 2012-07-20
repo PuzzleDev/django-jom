@@ -60,7 +60,7 @@ class JomFactory(object):
         return JomClass(self.getForModel(model))
         
 
-class JomDescriptor(type):
+class JomDescriptor(object):
     model = None
     fields = None
     exclude = None
@@ -90,11 +90,11 @@ class JomEntry(object):
 
 
 class JomClass(JomEntry):
-    template = "jom/JomEntry.js"
+    template = "jom/JomClass.js"
     
     def renderClass(self):
         dictionary = {
-                'clazz': self.descriptor.__class__.__name__,
+                'clazz': self.descriptor.__name__,
                 'include': self.include}
         
         fields = [x
@@ -117,16 +117,15 @@ class JomInstance(JomEntry):
     
     def __init__(self, descriptor, instance):
         super(JomInstance, self).__init__(descriptor)
-        if not isinstance(instance, self.__meta__.model):
+        if not isinstance(instance, self.model):
             # model cannot be null
             raise AssertionError(
                     "%s instance is not an instance of %s." %
-                    (instance, self.__meta__.model))
+                    (instance, self.model))
         self.instance = instance
-        self.descriptor = descriptor
     
     def toDict(self):
-        dictionary = {'clazz': self.descriptor.__class__.__name__,}
+        dictionary = {'clazz': self.descriptor.__name__,}
         jom_fields = {}
         for field in self.fields:
             field_name = field.name
@@ -168,7 +167,7 @@ class JomInstance(JomEntry):
 
     
     def toJavascript(self):
-        t = Template("new {{ config.clazz }}({{% for key, jomField in config.fields.items %}\n" +
+        t = Template("new {{ clazz }}({{% for key, jomField in fields.items %}\n" +
                      "'{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}})")
         c = Context(self.toDict())
         return t.render(c)

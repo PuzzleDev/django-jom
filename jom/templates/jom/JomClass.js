@@ -10,12 +10,12 @@
 	this.fields = new Array();{% for field in fields %}
 	this.fields['{{ field.name }}'] = {{ field.defaultValue }};{% endfor %}
 	
-	init = function(config) {
+	this.init = function(config) {
 		for(var key in config) {
             this.fields[key] = config[key];
         }
 	};
-	init(config);
+	this.init(config);
 };
 
 {% for field in fields %}
