@@ -183,7 +183,7 @@ class JomInstance(JomEntry):
 
     
     def toJavascript(self):
-        t = Template("new {{ clazz }}({{% for key, jomField in fields.items %}\n" +
-                     "'{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}})")
+        t = Template("{{% for key, jomField in fields.items %}\n" +
+                     "'{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")
         c = Context(self.toDict())
         return t.render(c)

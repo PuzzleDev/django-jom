@@ -113,7 +113,4 @@ class ForeignKeyJomField(JomField):
         return self.value.__srt__()
     
     def toJavascript(self):
-        if self.factory.descriptors.has_key(self.value.__class__):
-            return self.factory.getJomInstance(self.value).toJavascript()
-        else:
-            return safe("\"%s\"" % self.value)
+        return self.value.id

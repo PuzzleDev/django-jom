@@ -40,18 +40,22 @@
 	this.joms = new Array();
 }
 
-{{ clazz }}Factory.prototype.get = function(jomId) {
-	return this.joms[jomId];
+{{ clazz }}Factory.prototype.get = function(instanceId) {
+	return this.joms[instanceId];
 }
 
-{{ clazz }}Factory.prototype.getOrCreate = function(jomId, fieldMap) {
-	var jom =  this.joms[jomId];
+{{ clazz }}Factory.prototype.getOrCreate = function(instanceId, fieldMap) {
+	var jom =  this.joms[instanceId];
 	if (jom == undefined) {
 		jom = new {{ clazz }}({{% for key, jomField in fields.items %}
             '{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}});
         this.joms[jomId] = jom;
 	}
 	return jom;
+}
+
+{{ clazz }}Factory.prototype.asynchCreate = function(instanceId, successCallback, errorCallback) {
+	// TODO(msama): not implemented yet.
 }
 
 var singleton{{ clazz }}Factory = new {{ clazz }}Factory();
