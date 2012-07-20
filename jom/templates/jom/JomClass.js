@@ -8,7 +8,7 @@
 	
 	/* Fields */
 	this.fields = new Array();{% for field in fields %}
-	this.fields['{{ field.name }}'] = {{ field.defaultValue }};{% endfor %}
+	this.fields['{{ field.name }}'] = undefined;{% endfor %}
 	
 	this.init = function(config) {
 		for(var key in config) {
@@ -47,9 +47,9 @@
 {{ clazz }}Factory.prototype.getOrCreate = function(instanceId, fieldMap) {
 	var jom =  this.joms[instanceId];
 	if (jom == undefined) {
-		jom = new {{ clazz }}({{% for key, jomField in fields.items %}
-            '{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}});
-        this.joms[jomId] = jom;
+		jom = new {{ clazz }}({{% for jomField in fields %}
+            '{{ jomField.name }}': fieldMap['{{ jomField.name }}']{% if not forloop.last %},{% endif %}{% endfor %}});
+        this.joms[instanceId] = jom;
 	}
 	return jom;
 }

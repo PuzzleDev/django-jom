@@ -143,8 +143,8 @@ class JomInstance(JomEntry):
         for field in self.fields:
             field_name = field.name
             field_value = getattr(self.instance, field_name)
-            if not field_value:
-                continue
+            #if not field_value:
+            #    continue
             
             if isinstance(field, FileField):
                 # File field

@@ -1,1 +1,1 @@
-{% load jom_tags %}{{ jomInstance.toJavascript }};
+{% load jom_tags %}{{ jomInstance.toJavascript }}
