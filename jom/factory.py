@@ -8,11 +8,8 @@ from django.db.models.fields.files import FileField
 from django.db import models
 from django.template.loader import render_to_string
 from django.db.models.fields import CharField, IntegerField, FloatField,\
-    NullBooleanField, DateTimeField, TimeField, AutoField
+    NullBooleanField, DateTimeField, TimeField, AutoField, BooleanField
 from django.db.models.fields.related import ForeignKey, ManyToManyField
-from jom.fields import UrlJomField, StringJomField, BooleanJomField,\
-    NumeralJomField, DateJomField
-from django.forms.fields import BooleanField
 from numpy.oldnumeric.random_array import ArgumentError
 from django.template.base import Template
 from django.template.context import Context
@@ -50,7 +47,11 @@ class JomFactory(object):
                 print("[JOM] Import error: %s " % ex)
     
     def getForModel(self, model):
-        return self.descriptors[model]
+        descriptor = self.descriptors[model]
+        if not descriptor:
+            raise AssertionError(
+                "Model was not registered: %s." % model)
+        return descriptor
     
     def getJomInstance(self, instance):
         return JomInstance(
@@ -68,7 +69,7 @@ class JomDescriptor(object):
 
 
 class JomEntry(object):
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, factory = JomFactory.default()):
         if descriptor.model == None:
             # model cannot be null
             raise AssertionError(
@@ -87,6 +88,7 @@ class JomEntry(object):
         
         self.include = descriptor.include
         self.descriptor = descriptor
+        self.factory = factory
 
 
 class JomClass(JomEntry):
@@ -115,52 +117,58 @@ class JomClass(JomEntry):
 
 class JomInstance(JomEntry):
     
-    def __init__(self, descriptor, instance):
-        super(JomInstance, self).__init__(descriptor)
+    def __init__(self, descriptor, instance,
+            factory = JomFactory.default()):
+        super(JomInstance, self).__init__(descriptor, factory)
         if not isinstance(instance, self.model):
             # model cannot be null
             raise AssertionError(
                     "%s instance is not an instance of %s." %
                     (instance, self.model))
         self.instance = instance
+        
     
     def toDict(self):
+        from jom import fields as jomFields
         dictionary = {'clazz': self.descriptor.__name__,}
         jom_fields = {}
         for field in self.fields:
             field_name = field.name
             field_value = getattr(self.instance, field_name)
+            if not field_value:
+                continue
+            
             if isinstance(field, FileField):
                 # File field
                 if field_value.name != None:
                     jom_fields[field_name] =\
-                            UrlJomField(field_name, field_value.url)
+                            jomFields.UrlJomField(field_name, field_value.url, self.factory)
             elif isinstance(field, (BooleanField, NullBooleanField)):
                 # Boolean field
                 jom_fields[field_name] =\
-                        BooleanJomField(field_name, field_value)
+                        jomFields.BooleanJomField(field_name, field_value, self.factory)
             elif isinstance(field, CharField):
                 # Char field
                 jom_fields[field_name] =\
-                        StringJomField(field_name, field_value)
+                        jomFields.StringJomField(field_name, field_value, self.factory)
             elif isinstance(field, ForeignKey):
                 # TODO(msama): handle FK and M2M
                 jom_fields[field_name] =\
-                        StringJomField(field_name, field_value.__str__())
+                        jomFields.ForeignKeyJomField(field_name, field_value, self.factory)
             elif isinstance(field, ManyToManyField):
                 # TODO(msama): handle FK and M2M
                 jom_fields[field_name] =\
-                        StringJomField(field_name, field_value.__str__())
+                        jomFields.StringJomField(field_name, field_value.__str__(), self.factory)
             elif isinstance(field, (AutoField, IntegerField, FloatField)):
                 # Numeral field    
                 jom_fields[field_name] =\
-                        NumeralJomField(field_name, field_value)
+                        jomFields.NumeralJomField(field_name, field_value, self.factory)
             elif isinstance(field, (DateTimeField, TimeField, DateTimeField)):
                 # Numeral field
                 jom_fields[field_name] =\
-                        DateJomField(field_name, field_value)
+                        jomFields.DateJomField(field_name, field_value, self.factory)
             else:
-                raise ArgumentError("Field not handled.")
+                raise ArgumentError("Field not handled: %s." % field)
             
         dictionary['fields'] = jom_fields
         return dictionary
@@ -171,5 +179,3 @@ class JomInstance(JomEntry):
                      "'{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}})")
         c = Context(self.toDict())
         return t.render(c)
-        
-        return self.value

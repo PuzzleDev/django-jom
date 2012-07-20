@@ -18,5 +18,9 @@ def jom_instance(instance, jsVarName):
     """
     
     jomInstance = JomFactory.default().getJomInstance(instance)
+    if not jomInstance:
+        raise AssertionError(
+                "Model not registered: %s" % instance.__class__)
+    #print(jomInstance.toJavascript())
     return {'jsVarName': jsVarName,
             'jomInstance': jomInstance}
