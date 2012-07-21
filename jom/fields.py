@@ -48,7 +48,7 @@ class NumeralJomField(JomField):
     """
     
     def __init__(self, name, value, factory = jom_factory.JomFactory.default()):
-        if not isinstance(value, (int, long, float, complex)):
+        if not isinstance(value, (int, long, float)):
             raise AssertionError(
                 "Value should be a number. Found: %s." % value)
         super(NumeralJomField, self).__init__(name, value, factory)
@@ -57,7 +57,8 @@ class NumeralJomField(JomField):
         return self.value
     
     def toJavascript(self):
-        return self.value
+        # marked safe to avoid comma separators
+        return safe(self.value)
 
 
 class StringJomField(JomField):

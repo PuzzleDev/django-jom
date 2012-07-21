@@ -125,8 +125,8 @@ class JomClass(JomEntry):
     
     def renderClass(self):
         dictionary = {
-                'clazz': self.descriptor.__name__,
-                'include': self.include}
+                'clazz': self.descriptor.__name__
+                }
         
         fields = [x
             for x in self.model._meta.fields
@@ -181,7 +181,7 @@ class JomInstance(JomEntry):
                 jom_fields[field_name] =\
                         jomFields.StringJomField(field_name, field_value, self.factory)
             elif isinstance(field, ForeignKey):
-                # TODO(msama): handle FK and M2M
+                # FK
                 jom_fields[field_name] =\
                         jomFields.ForeignKeyJomField(field_name, field_value, self.factory)
             elif isinstance(field, ManyToManyField):
