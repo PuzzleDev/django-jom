@@ -1,4 +1,4 @@
-/**{# JomEntry class skeleton #}
+/**{# JomEntry class skeleton rendered as a Django template #}
  * {{ clazz }}  class file
  * Generated on {% now 'DATETIME_FORMAT' %}
  * 
@@ -29,11 +29,6 @@
 	this.fields['{{ field.name }}'] = value;
 };
 {% endfor %}
-
-
-{% if include %}
-	{% include include %}
-{% endif %}
 
 
 {{ clazz }}Factory = function() {

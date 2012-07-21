@@ -69,10 +69,29 @@ class JomDescriptor(object):
         
         TODO(msama): add read only fields.
     """
+    
+    """ The model which will be exported as a Jom.
+        If you define multiple descriptors for the same
+        model you will have multiple Joms. 
+    """
     model = None
+    
+    """ The fields to include in the Jom.
+        If None all the fields will be exported.
+    """
     fields = None
+    
+    """ The fields to exclude from the Jom.
+        If None all the fields in JomDescriptor.fields 
+        will be exported.
+    """
     exclude = None
-    include = None
+    
+    """ The template to be used to create the Jom.
+        WARNING: change this only if you know 
+        what you are doing!
+    """
+    template = "jom/JomClass.js"
     
 
 
@@ -94,13 +113,15 @@ class JomEntry(object):
         if descriptor.exclude != None:
             self.fields -= descriptor.exclude
         
-        self.include = descriptor.include
+        if descriptor.template == None:
+            raise AssertionError("Template cannot be None.")
+        self.template = descriptor.template
+        
         self.descriptor = descriptor
         self.factory = factory
 
 
 class JomClass(JomEntry):
-    template = "jom/JomClass.js"
     
     def renderClass(self):
         dictionary = {
