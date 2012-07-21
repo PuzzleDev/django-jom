@@ -19,4 +19,5 @@ def jom_dict(instance):
     if not jomInstance:
         raise AssertionError(
                 "Model not registered: %s" % instance.__class__)
+    print(jomInstance.toJavascript())
     return {'jomInstance': jomInstance}

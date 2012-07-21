@@ -37,7 +37,7 @@ class Command(BaseCommand):
             # get the django module name
             app_name = model.__module__.split(".")[::-1][1]
             app_folder = os.path.join(folder, app_name).replace("\\","/")
-            filename = os.path.join(app_folder, jomDescriptor.__name__ + ".js").replace("\\","/")
+            filename = os.path.join(app_folder, jomDescriptor.__class__.__name__ + ".js").replace("\\","/")
             ensure_dir(filename)
             print("[JOM] Generating " + filename)
             out_file = open(filename,"w")

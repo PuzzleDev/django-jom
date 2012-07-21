@@ -12,9 +12,11 @@ class JomField(object):
     """ Define the base class for a field.
     """
     
-    def __init__(self, name, value, factory = jom_factory.JomFactory.default()):
+    def __init__(self, name, value, readonly = False,
+                 factory = jom_factory.JomFactory.default()):
         self.name = name
         self.value = value
+        self.readonly = readonly
         self.factory = factory
         
     def toString(self):
@@ -30,7 +32,8 @@ class BooleanJomField(JomField):
     """ Define a field wrapping a boolean.
     """
     
-    def __init__(self, name, value, factory = jom_factory.JomFactory.default()):
+    def __init__(self, name, value, readonly = False,
+            factory = jom_factory.JomFactory.default()):
         if not isinstance(value, bool):
             raise AssertionError(
                 "Value should be a boolean. Found: %s." % value)
@@ -47,7 +50,8 @@ class NumeralJomField(JomField):
     """ Define a field wrapping a numeral.
     """
     
-    def __init__(self, name, value, factory = jom_factory.JomFactory.default()):
+    def __init__(self, name, value,  readonly = False,
+                 factory = jom_factory.JomFactory.default()):
         if not isinstance(value, (int, long, float)):
             raise AssertionError(
                 "Value should be a number. Found: %s." % value)
@@ -65,7 +69,8 @@ class StringJomField(JomField):
     """ Define a field wrapping a string.
     """
     
-    def __init__(self, name, value, factory = jom_factory.JomFactory.default()):
+    def __init__(self, name, value,  readonly = False,
+            factory = jom_factory.JomFactory.default()):
         if not isinstance(value, (str, unicode)):
             raise AssertionError(
                 "Value should be a string. Found: %s." % value)
@@ -76,20 +81,37 @@ class StringJomField(JomField):
     
     def toJavascript(self):
         # TODO(msama): handle tabs and new lines
-        return safe("\"%s\"" % self.value.replace("\"", "\\"))
+        return safe("\"%s\"" % self.value.replace("\"", "\\\""))
     
 
-class UrlJomField(StringJomField):
+class UrlJomField(JomField):
     """ Define a field wrapping a file.
     """
-    pass
+    def __init__(self, name, value, readonly = False,
+                 factory = jom_factory.JomFactory.default()):
+        # TODO(msama): typechecking
+        super(StringJomField, self).__init__(name, value, factory)
+        self.name = name
+        if value.name != None:
+            self.value = value.url
+        else:
+            self.value = ""
+        self.factory = factory
+        self.readonly = readonly
+        
+    def toString(self):
+        return self.value
+    
+    def toJavascript(self):
+        return self.value
 
 
 class DateJomField(JomField):
     """ Define a field wrapping a boolean.
     """
     
-    def __init__(self, name, value, factory = jom_factory.JomFactory.default()):
+    def __init__(self, name, value,  readonly = False,
+            factory = jom_factory.JomFactory.default()):
         if not isinstance(value, (datetime.date.Date, 
                 datetime.time.Time, datetime.datetime.DateTime)):
             raise AssertionError(
@@ -104,7 +126,8 @@ class DateJomField(JomField):
     
 
 class ForeignKeyJomField(JomField):
-    def __init__(self, name, value, factory = jom_factory.JomFactory.default()):
+    def __init__(self, name, value, readonly = False,
+            factory = jom_factory.JomFactory.default()):
         if not isinstance(value, Model):
             raise AssertionError(
                 "Value should be a Model. Found: %s." % value)

@@ -23,7 +23,8 @@ class JomFactory(object):
     
     def register(self, descriptor):
         if not self.descriptors.has_key(descriptor.model):
-            self.descriptors[descriptor.model] = descriptor
+            # Initialize the descriptor and add it to the dictionary
+            self.descriptors[descriptor.model] = descriptor()
         else:
             raise AssertionError(
                     "JomEntry %s was already registered" % descriptor) 
@@ -66,8 +67,6 @@ class JomDescriptor(object):
         Developers have to override this class
         with all the models that they want
         to export.
-        
-        TODO(msama): add read only fields.
     """
     
     """ The model which will be exported as a Jom.
@@ -87,36 +86,92 @@ class JomDescriptor(object):
     """
     exclude = None
     
+    """ Which fields have to be read-only.
+    """
+    readonly = ['id',]
+    
+    """ A dictionary name: JomFieldclass
+        Override this to force the desired JomField
+    """
+    force_jom_fields = {}
+    
     """ The template to be used to create the Jom.
         WARNING: change this only if you know 
         what you are doing!
     """
     template = "jom/JomClass.js"
     
-
-
-class JomEntry(object):
-    def __init__(self, descriptor, factory = JomFactory.default()):
-        if descriptor.model == None:
+    def __init__(self):
+        if self.model == None:
             # model cannot be null
             raise AssertionError(
                     "Model cannot be null.")
-        elif not issubclass(descriptor.model, models.Model):
+        elif not issubclass(self.model, models.Model):
             # model should be a subclass of Model
             raise AssertionError(
                     "Given class %s is not a Model."
-                    % descriptor.model)
-        self.model = descriptor.model    
+                    % self.model)
             
-        if descriptor.fields == None:
-            self.fields = self.model._meta.fields
-        if descriptor.exclude != None:
-            self.fields -= descriptor.exclude
+        if self.fields == None:
+            model_fields = self.model._meta.fields
+        if self.exclude != None:
+            model_fields = [x
+                    for x in self.model_fields
+                    if x.name not in self.exclude]
         
-        if descriptor.template == None:
+        if self.template == None:
             raise AssertionError("Template cannot be None.")
-        self.template = descriptor.template
+        if self.fields == None:
+            # Include all model fields
+            model_fields = self.model._meta.fields
+        else:
+            # Include only selected model fields
+            model_fields = [x
+                    for x in self.model._meta.fields
+                    if x.name in self.fields]
+        if self.exclude != None:
+            # Exclude excluded model fields
+            model_fields = [x
+                    for x in model_fields
+                    if x.name not in self.exclude]
         
+        # Init jom_fields
+        from jom import fields as jomFields
+        self.jom_fields = dict(self.force_jom_fields)
+        for field in model_fields:
+            field_name = field.name
+
+            # Skip already set fields
+            if self.jom_fields.has_key(field_name):
+                continue
+            elif isinstance(field, FileField):
+                self.jom_fields[field_name] = jomFields.UrlJomField
+            elif isinstance(field, (BooleanField, NullBooleanField)):
+                # Boolean field
+                self.jom_fields[field_name] = jomFields.BooleanJomField
+            elif isinstance(field, CharField):
+                # Char field
+                self.jom_fields[field_name] = jomFields.StringJomField
+            elif isinstance(field, ForeignKey):
+                # FK
+                self.jom_fields[field_name] = jomFields.ForeignKeyJomField
+            elif isinstance(field, ManyToManyField):
+                # TODO(msama): handle M2M
+                self.jom_fields[field_name] = jomFields.StringJomField
+            elif isinstance(field, (AutoField, IntegerField, FloatField)):
+                # Numeral field    
+                self.jom_fields[field_name] = jomFields.NumeralJomField
+            elif isinstance(field, (DateTimeField, TimeField, DateTimeField)):
+                # Numeral field
+                self.jom_fields[field_name] = jomFields.DateJomField
+            else:
+                raise ArgumentError("Field not handled: %s." % field)
+            
+
+class JomEntry(object):
+    def __init__(self, descriptor, factory = JomFactory.default()):
+        if descriptor == None:
+            raise AssertionError("Descriptor cannot be None.")
         self.descriptor = descriptor
         self.factory = factory
 
@@ -125,23 +180,12 @@ class JomClass(JomEntry):
     
     def renderClass(self):
         dictionary = {
-                'clazz': self.descriptor.__name__
+                'clazz': self.descriptor.__class__.__name__,
+                'fields': self.descriptor.jom_fields
                 }
         
-        fields = [x
-            for x in self.model._meta.fields
-            if x in self.fields]
-        
-        field_list = []
-        for field in fields:
-            field_list.append({
-                'name': field.name,
-                'defaultValue': "null"
-                });
-        
-        dictionary['fields'] = field_list
-        return render_to_string(self.template, dictionary = dictionary)
-
+        return render_to_string(
+                self.descriptor.template, dictionary = dictionary)
     
 
 class JomInstance(JomEntry):
@@ -149,62 +193,33 @@ class JomInstance(JomEntry):
     def __init__(self, descriptor, instance,
             factory = JomFactory.default()):
         super(JomInstance, self).__init__(descriptor, factory)
-        if not isinstance(instance, self.model):
+        if not isinstance(instance, self.descriptor.model):
             # model cannot be null
             raise AssertionError(
                     "%s instance is not an instance of %s." %
-                    (instance, self.model))
+                    (instance, self.descriptor.model))
         self.instance = instance
+        self.jom_fields = {}
+        for field_name, field_class in self.descriptor.jom_fields.items():
+            field_value = getattr(self.instance, field_name)
+
+            self.jom_fields[field_name] = field_class(
+                        field_name,
+                        field_value,
+                        readonly = field_name in self.descriptor.readonly,
+                        factory = self.factory
+                        )
         
     
     def toDict(self):
-        from jom import fields as jomFields
-        dictionary = {'clazz': self.descriptor.__name__,}
-        jom_fields = {}
-        for field in self.fields:
-            field_name = field.name
-            field_value = getattr(self.instance, field_name)
-            #if not field_value:
-            #    continue
-            
-            if isinstance(field, FileField):
-                # File field
-                if field_value.name != None:
-                    jom_fields[field_name] =\
-                            jomFields.UrlJomField(field_name, field_value.url, self.factory)
-            elif isinstance(field, (BooleanField, NullBooleanField)):
-                # Boolean field
-                jom_fields[field_name] =\
-                        jomFields.BooleanJomField(field_name, field_value, self.factory)
-            elif isinstance(field, CharField):
-                # Char field
-                jom_fields[field_name] =\
-                        jomFields.StringJomField(field_name, field_value, self.factory)
-            elif isinstance(field, ForeignKey):
-                # FK
-                jom_fields[field_name] =\
-                        jomFields.ForeignKeyJomField(field_name, field_value, self.factory)
-            elif isinstance(field, ManyToManyField):
-                # TODO(msama): handle FK and M2M
-                jom_fields[field_name] =\
-                        jomFields.StringJomField(field_name, field_value.__str__(), self.factory)
-            elif isinstance(field, (AutoField, IntegerField, FloatField)):
-                # Numeral field    
-                jom_fields[field_name] =\
-                        jomFields.NumeralJomField(field_name, field_value, self.factory)
-            elif isinstance(field, (DateTimeField, TimeField, DateTimeField)):
-                # Numeral field
-                jom_fields[field_name] =\
-                        jomFields.DateJomField(field_name, field_value, self.factory)
-            else:
-                raise ArgumentError("Field not handled: %s." % field)
-            
-        dictionary['fields'] = jom_fields
+        dictionary = {'clazz': self.descriptor.__class__.__name__,
+                      'fields': self.jom_fields
+                      }
         return dictionary
 
     
     def toJavascript(self):
-        t = Template("{{% for key, jomField in fields.items %}\n" +
-                     "'{{ key }}': {{ jomField.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")
+        t = Template("{{% for key, fieldInstance in fields.items %}\n" +
+                     "'{{ key }}': {{ fieldInstance.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")
         c = Context(self.toDict())
         return t.render(c)
