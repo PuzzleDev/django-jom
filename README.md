@@ -22,4 +22,4 @@ Please feel free to improve django-jom and submit a pull request.
 
 django-jom is developed and maintained by [PuzzleDev](www.puzzledev.com).
 
-django-jom is based on the SSMVC pattern which was originally designed by Michele Sama (@msama) and Franco Raimondi.
+django-jom is based on the SSMVC pattern which was originally designed by Michele Sama (@msama) and Franco Raimondi (@fraimondi).
