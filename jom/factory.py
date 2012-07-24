@@ -17,14 +17,23 @@ from django.template.context import Context
 
 class JomFactory(object):
     """ Stores all the JomEntry
+    
+        self.descriptors is a model: descriptor dict.
+        self.models is a str: model dict.
     """
     __instance = None
-    descriptors = {}
+    
+    def __init__(self):
+        super(JomFactory, self).__init__()
+        self.descriptors = {}
+        self.models = {}
     
     def register(self, descriptor):
         if not self.descriptors.has_key(descriptor.model):
             # Initialize the descriptor and add it to the dictionary
-            self.descriptors[descriptor.model] = descriptor()
+            desc_instance = descriptor()
+            self.descriptors[descriptor.model] = desc_instance
+            self.models[descriptor.model.__name__]= desc_instance
         else:
             raise AssertionError(
                     "JomEntry %s was already registered" % descriptor) 
@@ -47,6 +56,13 @@ class JomFactory(object):
             except ImportError, ex:
                 print("[JOM] Import error: %s " % ex)
     
+    def getForName(self, name):
+        descriptor = self.models[name]
+        if not descriptor:
+            raise AssertionError(
+                "Model was not registered: %s." % name)
+        return descriptor
+    
     def getForModel(self, model):
         descriptor = self.descriptors[model]
         if not descriptor:
@@ -60,7 +76,23 @@ class JomFactory(object):
         
     def getJomClass(self, model):
         return JomClass(self.getForModel(model))
+    
+    def saveJom(self, dictValues):
+        model_name = dictValues.get('model', None)
+        if model_name == None:
+            raise ValueError("Model cannot be None")
+        descriptor = self.models[model_name]
+        if descriptor == None:
+            raise ValueError(
+                    "Descriptor for model %s was not registered" % 
+                    model_name)
+        instance = descriptor.model.objects.get(
+                id = dictValues.get("id"))
         
+        jomInstance = self.getJomInstance(instance)
+        jomInstance.update(dictValues)
+        return jomInstance
+             
 
 class JomDescriptor(object):
     """ Describe a Jom node.
@@ -182,6 +214,7 @@ class JomClass(JomEntry):
         clazz = self.descriptor.__class__.__name__
         dictionary = {
                 'clazz': clazz,
+                'model': self.descriptor.model.__name__
                 }
         
         fields = {}
@@ -207,15 +240,12 @@ class JomInstance(JomEntry):
         self.instance = instance
         self.jom_fields = {}
         for field_name, field_class in self.descriptor.jom_fields.items():
-            field_value = getattr(self.instance, field_name)
-
             self.jom_fields[field_name] = field_class(
+                        self.instance,
                         field_name,
-                        field_value,
                         readonly = field_name in self.descriptor.readonly,
                         factory = self.factory
                         )
-        
     
     def toDict(self):
         dictionary = {'clazz': self.descriptor.__class__.__name__,
@@ -229,3 +259,11 @@ class JomInstance(JomEntry):
                      "'{{ key }}': {{ fieldInstance.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")
         c = Context(self.toDict())
         return t.render(c)
+    
+    def update(self, dictValues):
+        for name, jom_field in self.jom_fields.items:
+            if not jom_field.readonly:
+                if dictValues.has_key(name):
+                    jom_field.setValue(dictValues[name])
+        self.instance.save()
+        

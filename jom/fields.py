@@ -13,13 +13,21 @@ class JomField(object):
     """ Define the base class for a field.
     """
     
-    def __init__(self, name, value, readonly = False,
+    def __init__(self, instance, name, readonly = False,
                  factory = jom_factory.JomFactory.default()):
         self.name = name
-        self.value = value
+        self.instance = instance
         self.readonly = readonly
         self.factory = factory
+
+    def getValue(self):
+        return getattr(self.instance, self.name)
+    
+    def setValue(self, value):
+        setattr(self.instance, self.name, value)
         
+    value = property(getValue, setValue)
+
     def toString(self):
         raise AssertionError(
                 "JomField is abstract")
@@ -44,12 +52,13 @@ class BooleanJomField(JomField):
     """ Define a field wrapping a boolean.
     """
     
-    def __init__(self, name, value, readonly = False,
+    def __init__(self, instance, name, readonly = False,
             factory = jom_factory.JomFactory.default()):
+        value = getattr(instance, name)
         if not isinstance(value, bool):
             raise AssertionError(
                 "Value should be a boolean. Found: %s." % value)
-        super(BooleanJomField, self).__init__(name, value, readonly, factory)
+        super(BooleanJomField, self).__init__(instance, name, readonly, factory)
         
     def toString(self):
         return self.value
@@ -62,12 +71,13 @@ class NumeralJomField(JomField):
     """ Define a field wrapping a numeral.
     """
     
-    def __init__(self, name, value,  readonly = False,
+    def __init__(self, instance, name, readonly = False,
                  factory = jom_factory.JomFactory.default()):
+        value = getattr(instance, name)
         if not isinstance(value, (int, long, float)):
             raise AssertionError(
                 "Value should be a number. Found: %s." % value)
-        super(NumeralJomField, self).__init__(name, value, readonly, factory)
+        super(NumeralJomField, self).__init__(instance, name, readonly, factory)
         
     def toString(self):
         return self.value
@@ -81,12 +91,14 @@ class StringJomField(JomField):
     """ Define a field wrapping a string.
     """
     
-    def __init__(self, name, value,  readonly = False,
+    def __init__(self, instance, name, readonly = False,
             factory = jom_factory.JomFactory.default()):
+        value = getattr(instance, name)
         if not isinstance(value, (str, unicode)):
+            value = getattr(instance, name)
             raise AssertionError(
                 "Value should be a string. Found: %s." % value)
-        super(StringJomField, self).__init__(name, value, readonly, factory)
+        super(StringJomField, self).__init__(instance, name, readonly, factory)
         
     def toString(self):
         return self.value
@@ -100,12 +112,13 @@ class JavascriptJomField(JomField):
     """ Define a field wrapping a string.
     """
     
-    def __init__(self, name, value,  readonly = False,
+    def __init__(self, instance, name, readonly = False,
             factory = jom_factory.JomFactory.default()):
+        value = getattr(instance, name)
         if not isinstance(value, (str, unicode)):
             raise AssertionError(
                 "Value should be a string. Found: %s." % value)
-        super(StringJomField, self).__init__(name, value, readonly, factory)
+        super(StringJomField, self).__init__(instance, name, readonly, factory)
         
     def toString(self):
         return self.value
@@ -117,17 +130,23 @@ class JavascriptJomField(JomField):
 class UrlJomField(JomField):
     """ Define a field wrapping a file.
     """
-    def __init__(self, name, value, readonly = False,
+    def __init__(self, instance, name, readonly = False,
                  factory = jom_factory.JomFactory.default()):
         # TODO(msama): typechecking
-        super(UrlJomField, self).__init__(name, value, readonly, factory)
-        self.name = name
-        if value.name != None:
-            self.value = value.url
+        super(UrlJomField, self).__init__(instance, name, readonly, factory)
+        
+    def getValue(self):
+        filefield = getattr(self.instance, self.name)
+        if filefield.name != None:
+            return filefield.url
         else:
-            self.value = ""
-        self.factory = factory
-        self.readonly = readonly
+            return ""
+    
+    def setValue(self, value):
+        filefield = getattr(self.instance, self.name)
+        filefield.name = value
+        
+    value = property(getValue, setValue)
         
     def toString(self):
         return self.value
@@ -141,13 +160,14 @@ class DateJomField(JomField):
     """ Define a field wrapping a boolean.
     """
     
-    def __init__(self, name, value,  readonly = False,
+    def __init__(self, instance, name, readonly = False,
             factory = jom_factory.JomFactory.default()):
+        value = getattr(instance, name)
         if not isinstance(value, (datetime.date.Date, 
                 datetime.time.Time, datetime.datetime.DateTime)):
             raise AssertionError(
                 "Value should be a datetime. Found: %s." % value)
-        super(DateJomField, self).__init__(name, value, readonly, factory)
+        super(DateJomField, self).__init__(instance, name, readonly, factory)
         
     def toString(self):
         return self.value
@@ -157,13 +177,29 @@ class DateJomField(JomField):
     
 
 class ForeignKeyJomField(JomField):
-    def __init__(self, name, value, readonly = False,
+    def __init__(self, instance, name, readonly = False,
             factory = jom_factory.JomFactory.default()):
+        value = getattr(instance, name)
         if not isinstance(value, Model):
             raise AssertionError(
                 "Value should be a Model. Found: %s." % value)
-        super(ForeignKeyJomField, self).__init__(name, value, readonly, factory)
-        
+        super(ForeignKeyJomField, self).__init__(instance, name, readonly, factory)
+    
+    def getValue(self):
+        return getattr(self.instance, self.name)
+    
+    def setValue(self, value):
+        if isinstance(value, Model):
+            setattr(self.instance, self.name, value)
+        elif isinstance(value, dict):
+            jomInstance = self.factory.update(value)
+            setattr(self.instance, self.name, jomInstance.instance)
+        else:
+            raise AttributeError(
+                    "%s should be a instance of Model or a dict." % value)
+            
+    value = property(getValue, setValue)
+    
     def toString(self):
         return self.value.__srt__()
     

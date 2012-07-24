@@ -31,7 +31,7 @@
  */
 {{ clazz }}.prototype.asynchSave = function(successCallback, errorCallback) {
 	var json = new Array();
-	json['class'] = '{{ clazz }}';
+	json['model'] = '{{ model }}';
 	for (var key in this.fields) {
 		json[key] = this.fields[key];
 	}
