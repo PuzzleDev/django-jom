@@ -8,9 +8,9 @@ from django.db.models.fields.files import FileField
 from django.db import models
 from django.template.loader import render_to_string
 from django.db.models.fields import CharField, IntegerField, FloatField,\
-    NullBooleanField, DateTimeField, TimeField, AutoField, BooleanField
+    NullBooleanField, DateTimeField, TimeField, AutoField, BooleanField,\
+    TextField
 from django.db.models.fields.related import ForeignKey, ManyToManyField
-from numpy.oldnumeric.random_array import ArgumentError
 from django.template.base import Template
 from django.template.context import Context
 
@@ -149,7 +149,7 @@ class JomDescriptor(object):
             elif isinstance(field, (BooleanField, NullBooleanField)):
                 # Boolean field
                 self.jom_fields[field_name] = jomFields.BooleanJomField
-            elif isinstance(field, CharField):
+            elif isinstance(field, (CharField, TextField)):
                 # Char field
                 self.jom_fields[field_name] = jomFields.StringJomField
             elif isinstance(field, ForeignKey):
@@ -165,7 +165,7 @@ class JomDescriptor(object):
                 # Numeral field
                 self.jom_fields[field_name] = jomFields.DateJomField
             else:
-                raise ArgumentError("Field not handled: %s." % field)
+                raise Exception("Field not handled: %s." % field)
             
 
 class JomEntry(object):
@@ -179,10 +179,14 @@ class JomEntry(object):
 class JomClass(JomEntry):
     
     def renderClass(self):
+        clazz = self.descriptor.__class__.__name__
         dictionary = {
-                'clazz': self.descriptor.__class__.__name__,
-                'fields': self.descriptor.jom_fields
+                'clazz': clazz,
                 }
+        
+        fields = {}
+        for name, fieldClazz in self.descriptor.jom_fields.items():
+            fields[name] = fieldClazz.renderField(clazz, name)
         
         return render_to_string(
                 self.descriptor.template, dictionary = dictionary)

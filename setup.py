@@ -35,8 +35,6 @@ setup(name = 'django-puzzledev-jom',
        package_data = {
                 'jom': ['templates/*.*',
                         'templates/jom/*.*',
-                        'templates/jom/templatetags/*.*',
-                        'static/*.*',
-                        'static/js/*.*'],
+                        'templates/jom/templatetags/*.*'],
                 }
      )

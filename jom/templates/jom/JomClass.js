@@ -1,4 +1,4 @@
-/**{# JomEntry class skeleton rendered as a Django template #}
+{% load jom_tags %}/**{# JomEntry class skeleton rendered as a Django template #}
  * {{ clazz }}  class file
  * Generated on {% now 'DATETIME_FORMAT' %}
  * 
@@ -9,6 +9,12 @@
 	this.fields = new Array();{% for name in fields.keys %}
 	this.fields['{{ name }}'] = undefined;{% endfor %}
 	
+	// Foreign keys
+	this.fk = new Array();
+	
+	// m2m keys
+	this.m2m = new Array();
+	
 	this.init = function(config) {
 		for(var key in config) {
             this.fields[key] = config[key];
@@ -18,18 +24,8 @@
 };
 
 {% block jom_deg_accessor %}
-{% for name, fieldClass in fields.items %}
-/* Get {{ name }} */
-{{ clazz }}.prototype.get{{ name|capfirst }} = function() {
-	return this.fields['{{ name }}'];
-};
-
-/* Set {{ name }} */
-{{ clazz }}.prototype.set{{ name|capfirst }} = function(value) {
-	this.fields['{{ name }}'] = value;
-};
-{% endfor %}
-{% endblock %}{% block jom_def_extra %}{% endblock %}
+{% for name, fieldJs in fields.items %}{% field_class fieldJs clazz name %}
+{% endfor %}{% endblock %}{% block jom_def_extra %}{% endblock %}
 {% endblock %}
 
 {% block factory_def %}/**

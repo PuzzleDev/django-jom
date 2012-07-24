@@ -7,6 +7,7 @@ import datetime
 from django.template.defaultfilters import safe
 from django.db.models.base import Model
 from jom import factory as jom_factory
+from django.template.loader import render_to_string
 
 class JomField(object):
     """ Define the base class for a field.
@@ -26,6 +27,16 @@ class JomField(object):
     def toJavascript(self):
         raise AssertionError(
                 "JomField is abstract")
+        
+    @classmethod
+    def renderField(self, clazz, name):
+        dictionary = {
+                'clazz': clazz,
+                'name': name,
+                }
+        
+        return render_to_string(
+                'jom/JomField.js', dictionary = dictionary)
 
 
 class BooleanJomField(JomField):
@@ -84,6 +95,24 @@ class StringJomField(JomField):
         return safe("\"%s\"" % self.value.replace("\"", "\\\""))
     
 
+class JavascriptJomField(JomField):
+    """ Define a field wrapping a string.
+    """
+    
+    def __init__(self, name, value,  readonly = False,
+            factory = jom_factory.JomFactory.default()):
+        if not isinstance(value, (str, unicode)):
+            raise AssertionError(
+                "Value should be a string. Found: %s." % value)
+        super(StringJomField, self).__init__(name, value, factory)
+        
+    def toString(self):
+        return self.value
+    
+    def toJavascript(self):
+        return self.value
+    
+
 class UrlJomField(JomField):
     """ Define a field wrapping a file.
     """
@@ -138,3 +167,13 @@ class ForeignKeyJomField(JomField):
     
     def toJavascript(self):
         return self.value.id
+
+    @classmethod
+    def renderField(self, clazz, name):
+        dictionary = {
+                'clazz': clazz,
+                'name': name,
+                }
+        
+        return render_to_string(
+                'jom/ForeignKeyJomField.js', dictionary = dictionary)
