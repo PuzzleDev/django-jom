@@ -187,6 +187,7 @@ class JomClass(JomEntry):
         fields = {}
         for name, fieldClazz in self.descriptor.jom_fields.items():
             fields[name] = fieldClazz.renderField(clazz, name)
+        dictionary['fields'] = fields
         
         return render_to_string(
                 self.descriptor.template, dictionary = dictionary)

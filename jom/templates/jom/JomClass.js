@@ -24,7 +24,7 @@
 };
 
 {% block jom_deg_accessor %}
-{% for name, fieldJs in fields.items %}{% field_class fieldJs clazz name %}
+{% for name, fieldJs in fields.items %}{{ fieldJs }}
 {% endfor %}{% endblock %}{% block jom_def_extra %}{% endblock %}
 {% endblock %}
 

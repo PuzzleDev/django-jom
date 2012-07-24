@@ -33,6 +33,7 @@ class JomField(object):
         dictionary = {
                 'clazz': clazz,
                 'name': name,
+                'readonly': self.readonly
                 }
         
         return render_to_string(
@@ -173,6 +174,7 @@ class ForeignKeyJomField(JomField):
         dictionary = {
                 'clazz': clazz,
                 'name': name,
+                'readonly': self.readonly
                 }
         
         return render_to_string(
