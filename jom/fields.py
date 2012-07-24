@@ -29,11 +29,11 @@ class JomField(object):
                 "JomField is abstract")
         
     @classmethod
-    def renderField(self, clazz, name):
+    def renderField(self, clazz, name, readonly = False):
         dictionary = {
                 'clazz': clazz,
                 'name': name,
-                'readonly': self.readonly
+                'readonly': readonly
                 }
         
         return render_to_string(
@@ -49,7 +49,7 @@ class BooleanJomField(JomField):
         if not isinstance(value, bool):
             raise AssertionError(
                 "Value should be a boolean. Found: %s." % value)
-        super(BooleanJomField, self).__init__(name, value, factory)
+        super(BooleanJomField, self).__init__(name, value, readonly, factory)
         
     def toString(self):
         return self.value
@@ -67,7 +67,7 @@ class NumeralJomField(JomField):
         if not isinstance(value, (int, long, float)):
             raise AssertionError(
                 "Value should be a number. Found: %s." % value)
-        super(NumeralJomField, self).__init__(name, value, factory)
+        super(NumeralJomField, self).__init__(name, value, readonly, factory)
         
     def toString(self):
         return self.value
@@ -86,7 +86,7 @@ class StringJomField(JomField):
         if not isinstance(value, (str, unicode)):
             raise AssertionError(
                 "Value should be a string. Found: %s." % value)
-        super(StringJomField, self).__init__(name, value, factory)
+        super(StringJomField, self).__init__(name, value, readonly, factory)
         
     def toString(self):
         return self.value
@@ -105,7 +105,7 @@ class JavascriptJomField(JomField):
         if not isinstance(value, (str, unicode)):
             raise AssertionError(
                 "Value should be a string. Found: %s." % value)
-        super(StringJomField, self).__init__(name, value, factory)
+        super(StringJomField, self).__init__(name, value, readonly, factory)
         
     def toString(self):
         return self.value
@@ -120,7 +120,7 @@ class UrlJomField(JomField):
     def __init__(self, name, value, readonly = False,
                  factory = jom_factory.JomFactory.default()):
         # TODO(msama): typechecking
-        super(StringJomField, self).__init__(name, value, factory)
+        super(StringJomField, self).__init__(name, value, readonly, factory)
         self.name = name
         if value.name != None:
             self.value = value.url
@@ -146,7 +146,7 @@ class DateJomField(JomField):
                 datetime.time.Time, datetime.datetime.DateTime)):
             raise AssertionError(
                 "Value should be a datetime. Found: %s." % value)
-        super(DateJomField, self).__init__(name, value, factory)
+        super(DateJomField, self).__init__(name, value, readonly, factory)
         
     def toString(self):
         return self.value
@@ -161,7 +161,7 @@ class ForeignKeyJomField(JomField):
         if not isinstance(value, Model):
             raise AssertionError(
                 "Value should be a Model. Found: %s." % value)
-        super(ForeignKeyJomField, self).__init__(name, value, factory)
+        super(ForeignKeyJomField, self).__init__(name, value, readonly, factory)
         
     def toString(self):
         return self.value.__srt__()
@@ -170,11 +170,11 @@ class ForeignKeyJomField(JomField):
         return self.value.id
 
     @classmethod
-    def renderField(self, clazz, name):
+    def renderField(self, clazz, name, readonly = False):
         dictionary = {
                 'clazz': clazz,
                 'name': name,
-                'readonly': self.readonly
+                'readonly': readonly
                 }
         
         return render_to_string(

@@ -186,7 +186,8 @@ class JomClass(JomEntry):
         
         fields = {}
         for name, fieldClazz in self.descriptor.jom_fields.items():
-            fields[name] = fieldClazz.renderField(clazz, name)
+            readonly = True if name in self.descriptor.readonly else False
+            fields[name] = fieldClazz.renderField(clazz, name, readonly)
         dictionary['fields'] = fields
         
         return render_to_string(
