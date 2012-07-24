@@ -120,7 +120,7 @@ class UrlJomField(JomField):
     def __init__(self, name, value, readonly = False,
                  factory = jom_factory.JomFactory.default()):
         # TODO(msama): typechecking
-        super(StringJomField, self).__init__(name, value, readonly, factory)
+        super(UrlJomField, self).__init__(name, value, readonly, factory)
         self.name = name
         if value.name != None:
             self.value = value.url
@@ -133,7 +133,8 @@ class UrlJomField(JomField):
         return self.value
     
     def toJavascript(self):
-        return self.value
+        # TODO(msama): handle tabs and new lines
+        return safe("\"%s\"" % self.value)
 
 
 class DateJomField(JomField):

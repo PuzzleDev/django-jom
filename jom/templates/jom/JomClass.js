@@ -23,6 +23,34 @@
 	this.init(config);
 };
 
+{% block save %}/**
+ * Save the instance and all the loaded FK on the server.
+ * 
+ * @callback successCallback()
+ * @callback errorCallback(message)
+ */
+{{ clazz }}.prototype.asynchSave = function(successCallback, errorCallback) {
+	var json = new Array();
+	json['class'] = '{{ clazz }}';
+	for (var key in this.fields) {
+		json[key] = this.fields[key];
+	}
+	
+	var fk = new Array();
+	for (var key in this.fk) {
+		fk[key] = this.fk[key];
+	}
+	json['__fk'] = fk;
+	
+	var m2m = new Array();
+	for (var key in this.fk) {
+		m2m[key] = this.m2m[key];
+	}
+	json['__m2m'] = m2m;
+	
+	jomAsyncSave(json, successCallback, errorCallback);
+};{% endblock %}
+
 {% block jom_deg_accessor %}
 {% for name, fieldJs in fields.items %}{{ fieldJs }}
 {% endfor %}{% endblock %}{% block jom_def_extra %}{% endblock %}
@@ -35,11 +63,11 @@
 */
 {{ clazz }}Factory = function() {
 	this.joms = new Array();
-}
+};
 
 {{ clazz }}Factory.prototype.get = function(instanceId) {
 	return this.joms[instanceId];
-}
+};
 
 {{ clazz }}Factory.prototype.getOrCreate = function(instanceId, fieldMap) {
 	var jom =  this.joms[instanceId];
@@ -49,15 +77,34 @@
         this.joms[instanceId] = jom;
 	}
 	return jom;
-}
+};
 
+/**
+ * Asynchronously get an existing JomInstance from the server.
+ * 
+ * @param instanceId the id of the Jom to fetch
+ * @callback successCallback(jomInstance)
+ * @callback errorCallback(message)
+ */
 {{ clazz }}Factory.prototype.asynchGet = function(instanceId, successCallback, errorCallback) {
-	// TODO(msama): not implemented yet.
-}
+	var jom =  this.joms[instanceId];
+	if (jom == undefined) {
+		// TODO(msama): not implemented yet.
+		throw "Not implemented yet";
+	}
+	return jom;
+};
 
+/**
+ * Asynchronously create a new JomInstance on the server.
+ * 
+ * @callback successCallback(jomInstance)
+ * @callback errorCallback(message)
+ */
 {{ clazz }}Factory.prototype.asynchCreate = function(successCallback, errorCallback) {
 	// TODO(msama): not implemented yet.
-}
+	throw "Not implemented yet";
+};
 
 var singleton{{ clazz }}Factory = new {{ clazz }}Factory();
 {% endblock %}

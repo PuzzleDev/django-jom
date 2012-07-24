@@ -1,7 +1,17 @@
 /* Get {{ name }} */
 {{ clazz }}.prototype.get{{ name|capfirst }} = function(callback) {
 	if (this.fk['{{ name}}'] == undefined) {
-		throw "Not implemented yet";
+		var self = this;
+		singleton{{ clazz }}Factory.asynchGet(
+				this.fields['{{ name }}'],
+				// Success callback
+				function (jomFk) {
+					self.fk['{{ name}}'] = jomFk;
+				},
+				// Failure callback
+				function(msg) {
+					console.log(msg)
+				});
 	} else {
 		callback(this.fk['{{ name}}']);
 	}
@@ -28,5 +38,4 @@
 		this.fk['{{ name }}'] = undefined;	
 	}
 
-};
-{%endif%}
+};{% endif %}
