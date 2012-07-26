@@ -79,7 +79,7 @@ var {{ clazz|capital }}_ASYNC_SAVE_URL = '/jom/save/';
     	data: this.toMap(),
     	dataType: 'json',
     	type: 'POST',
-    	//traditional: true,
+    	traditional: true,
     	success: function(jsonResponse) { 
     		if (jsonResponse.result == true) {
     			successCallback()
