@@ -189,14 +189,20 @@ class ForeignKeyJomField(JomField):
         return getattr(self.instance, self.name)
     
     def setValue(self, value):
-        if isinstance(value, Model):
+        if value == None:
+            setattr(self.instance, self.name, None)
+        elif isinstance(value, (int, str, unicode)):
+            # We have received the id.
+            # The FK has not been changed
+            pass
+        elif isinstance(value, Model):
             setattr(self.instance, self.name, value)
         elif isinstance(value, dict):
             jomInstance = self.factory.update(value)
             setattr(self.instance, self.name, jomInstance.instance)
         else:
             raise AttributeError(
-                    "%s should be a instance of Model or a dict." % value)
+                    "%s (%s), should be a instance of Model or a dict." % (value, type(value)))
             
     value = property(getValue, setValue)
     

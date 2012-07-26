@@ -73,7 +73,7 @@ var {{ clazz|capital }}_ASYNC_SAVE_URL = '/jom/save/';
  * @callback successCallback()
  * @callback errorCallback(message)
  */
-{{ clazz }}.prototype.asynchSave = function(successCallback, errorCallback) {
+{{ clazz }}.prototype.asyncSave = function(successCallback, errorCallback) {
 	$.ajax({
     	url: {{ clazz|capital }}_ASYNC_SAVE_URL,
     	data: this.toMap(),
