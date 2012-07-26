@@ -1,4 +1,4 @@
-{% load jom_tags %}/**{# JomEntry class skeleton rendered as a Django template #}
+{% load jom_tags jom_filters %}/**{# JomEntry class skeleton rendered as a Django template #}
  * {{ clazz }}  class file
  * Generated on {% now 'DATETIME_FORMAT' %}
  * 
@@ -17,38 +17,75 @@
 	
 	this.init = function(config) {
 		for(var key in config) {
-            this.fields[key] = config[key];
+			if (this.hasOwnProperty(key)) {}
+            	this.set{{ key|camel|capfirst }}(config[key]);
+			}
         }
 	};
 	this.init(config);
 };
 
 {% block save %}/**
- * Save the instance and all the loaded FK on the server.
- * 
- * @callback successCallback()
- * @callback errorCallback(message)
+ * Export to Json
  */
-{{ clazz }}.prototype.asynchSave = function(successCallback, errorCallback) {
+{{ clazz }}.prototype.toJson = function() {
 	var json = new Array();
 	json['model'] = '{{ model }}';
 	for (var key in this.fields) {
 		json[key] = this.fields[key];
 	}
 	
-	var fk = new Array();
 	for (var key in this.fk) {
-		fk[key] = this.fk[key];
+		var fk = this.fk[key];
+		if (fk != undefined) {
+			// replace id with FK
+			json[key] = fk.toJson();
+		}
 	}
-	json['__fk'] = fk;
 	
-	var m2m = new Array();
-	for (var key in this.fk) {
+	for (var key in this.m2m) {
 		m2m[key] = this.m2m[key];
+		var m2m = this.m2m[key];
+		if (m2m != undefined) {
+			// replace ids with m2m
+			var m2mJson = new Array();
+			for (m2mId in m2m) {
+				m2mJson[key] = m2m.toJson();
+			}
+			json[key] = m2mJson;
+		}
 	}
-	json['__m2m'] = m2m;
 	
-	jomAsyncSave(json, successCallback, errorCallback);
+	return json;
+};
+
+var {{ clazz|capital }}_ASYNC_SAVE_URL = '/jom/save/';
+
+/**
+ * Save the instance and all the loaded FK on the server.
+ * 
+ * @callback successCallback()
+ * @callback errorCallback(message)
+ */
+{{ clazz }}.prototype.asynchSave = function(successCallback, errorCallback) {
+	var valueMap = this.toJson();
+	$.ajax({
+    	url: ASYNC_SAVE_URL,
+    	data: valueMap,
+    	dataType: 'json',
+    	type: 'POST',
+    	traditional: true,
+    	success: function(jsonResponse) { 
+    		if (jsonResponse.result == true) {
+    			successCallback()
+    		} else {
+    			errorCallback(jsonResponse.message)
+    		}
+    	},
+    	error: function() { 
+    		errorCallback("The server was unreachable.");
+    	}
+	});
 };{% endblock %}
 
 {% block jom_deg_accessor %}

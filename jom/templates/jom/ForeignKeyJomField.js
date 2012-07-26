@@ -1,5 +1,9 @@
-/* Get {{ name }} */
-{{ clazz }}.prototype.get{{ name|capfirst }} = function(callback) {
+{% load jom_filters %}/** 
+ * Get {{ name }} 
+ * 
+ * @callback callback(jomInstance)
+ */
+{{ clazz }}.prototype.get{{ name|camel|capfirst }}Jom = function(callback) {
 	if (this.fk['{{ name}}'] == undefined) {
 		var self = this;
 		singleton{{ clazz }}Factory.asynchGet(
@@ -17,19 +21,34 @@
 	}
 };
 
-/* Get FK id for field{{ name }} */
-{{ clazz }}.prototype.get{{ name|capfirst }}Id = function() {
+/**
+ * Get FK id for field{{ name }}
+ *
+ * @return the Fk id.
+ */
+{{ clazz }}.prototype.get{{ name|camel|capfirst }} = function() {
 	return this.fields['{{ name }}'];
 };
 
-{% if not readonly %}/* Set FK id for {{ name }} */
-{{ clazz }}.prototype.set{{ name|capfirst }}Id = function(value) {
-	this.fields['{{ name }}'] = value;
-	this.fk['{{ name }}'] = undefined;
+{% if not readonly %}/**
+ * Set FK id for {{ name }}.
+ * If the factory already contains an instance with the given
+ * ID then also the instance is stored as a FK.
+ *
+ * @param instanceId the FK id.
+ */
+{{ clazz }}.prototype.set{{ name|camel|capfirst }} = function(instanceId) {
+	this.fields['{{ name }}'] = instanceId;
+	// Get if it exists
+	this.fk['{{ name }}'] = singleton{{ clazz }}Factory.get(instanceId);
 };
 
-/* Set {{ name }}*/
-{{ clazz }}.prototype.set{{ name|capfirst }} = function(jomInstance) {
+/**
+ * Set {{ name }}
+ *
+ * @param jomInstance the instance to set.
+ */
+{{ clazz }}.prototype.set{{ name|camel|capfirst }}Jom = function(jomInstance) {
 	if (jomInstance != null) {
 		this.fields['{{ name }}'] = jomInstance.getId();
 		this.fk['{{ name }}'] = jomInstance;		

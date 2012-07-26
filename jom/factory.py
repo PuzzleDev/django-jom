@@ -4,15 +4,15 @@ Created on Jul 18, 2012
 @author: Michele Sama (m.sama@puzzledev.com)
 '''
 from django.conf import settings
-from django.db.models.fields.files import FileField
 from django.db import models
-from django.template.loader import render_to_string
 from django.db.models.fields import CharField, IntegerField, FloatField,\
     NullBooleanField, DateTimeField, TimeField, AutoField, BooleanField,\
     TextField
+from django.db.models.fields.files import FileField
 from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.template.base import Template
 from django.template.context import Context
+from django.template.loader import render_to_string
 
 
 class JomFactory(object):
