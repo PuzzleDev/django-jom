@@ -17,8 +17,14 @@
 	
 	this.init = function(config) {
 		for(var key in config) {
-			if (this.hasOwnProperty(key)) {}
-            	this.set{{ key|camel|capfirst }}(config[key]);
+			if (this.fields.hasOwnProperty(key)) {
+				// Public fields have a setter.
+				var setter = "set" + camel(key);
+				if (this.fields.hasOwnProperty(setter)) {
+	            	this[setter](config[key]);
+				} else {
+					this.fields[key] = config[key];
+				}
 			}
         }
 	};
@@ -26,10 +32,10 @@
 };
 
 {% block save %}/**
- * Export to Json
+ * Export to a data map.
  */
-{{ clazz }}.prototype.toJson = function() {
-	var json = new Array();
+{{ clazz }}.prototype.toMap = function() {
+	var json = {};
 	json['model'] = '{{ model }}';
 	for (var key in this.fields) {
 		json[key] = this.fields[key];
@@ -68,13 +74,12 @@ var {{ clazz|capital }}_ASYNC_SAVE_URL = '/jom/save/';
  * @callback errorCallback(message)
  */
 {{ clazz }}.prototype.asynchSave = function(successCallback, errorCallback) {
-	var valueMap = this.toJson();
 	$.ajax({
-    	url: ASYNC_SAVE_URL,
-    	data: valueMap,
+    	url: {{ clazz|capital }}_ASYNC_SAVE_URL,
+    	data: this.toMap(),
     	dataType: 'json',
     	type: 'POST',
-    	traditional: true,
+    	//traditional: true,
     	success: function(jsonResponse) { 
     		if (jsonResponse.result == true) {
     			successCallback()

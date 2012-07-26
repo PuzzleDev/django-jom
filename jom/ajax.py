@@ -7,6 +7,8 @@ Created on Jul 24, 2012
 import json
 from django.http import HttpResponse
 import datetime
+import traceback
+import sys
 
     
 
@@ -51,6 +53,8 @@ class AjaxResponse(object):
                 return HttpResponse(json_true(dictionary = dictionary),
                         content_type = "application/json") 
             except Exception, err:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                traceback.print_tb(exc_traceback, limit=10, file=sys.stdout)
                 return HttpResponse(json_false(message = "%s" % err),
                         content_type = "application/json") 
         return _decorated_fz

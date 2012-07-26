@@ -7,7 +7,7 @@ Created on Jul 24, 2012
 from jom.ajax import AjaxResponse
 from jom.factory import JomFactory
 
-@AjaxResponse
+@AjaxResponse()
 def jom_async_save_ajax(request):
     values = request.POST
     factory = JomFactory.default()
