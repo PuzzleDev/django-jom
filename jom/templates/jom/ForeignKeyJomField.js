@@ -1,4 +1,4 @@
-{% load jom_filters %}/** 
+{% load jom_filters %}{% if fk_class %}/** 
  * Get {{ name }} 
  * 
  * @callback callback(jomInstance)
@@ -19,7 +19,7 @@
 	} else {
 		callback(this.fk['{{ name}}']);
 	}
-};
+};{% endif %}
 
 /**
  * Get FK id for field{{ name }}
@@ -39,11 +39,11 @@
  */
 {{ clazz }}.prototype.set{{ name|camel|capfirst }} = function(instanceId) {
 	this.fields['{{ name }}'] = instanceId;
-	// Get if it exists
-	this.fk['{{ name }}'] = singleton{{ clazz }}Factory.get(instanceId);
+	{% if fk_class %}// Get if it exists
+	this.fk['{{ name }}'] = singleton{{ fk_clazz }}Factory.get(instanceId);{% endif %}
 };
 
-/**
+{% if fk_class %}/**
  * Set {{ name }}
  *
  * @param jomInstance the instance to set.
@@ -57,4 +57,4 @@
 		this.fk['{{ name }}'] = undefined;	
 	}
 
-};{% endif %}
+};{% endif %}{% endif %}

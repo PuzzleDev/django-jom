@@ -45,7 +45,7 @@
 		var fk = this.fk[key];
 		if (fk != undefined) {
 			// replace id with FK
-			json[key] = fk.toJson();
+			json[key] = fk.toMap();
 		}
 	}
 	
@@ -56,7 +56,7 @@
 			// replace ids with m2m
 			var m2mJson = new Array();
 			for (m2mId in m2m) {
-				m2mJson[key] = m2m.toJson();
+				m2mJson[key] = m2m.toMap();
 			}
 			json[key] = m2mJson;
 		}

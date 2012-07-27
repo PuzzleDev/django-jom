@@ -57,18 +57,10 @@ class JomFactory(object):
                 print("[JOM] Import error: %s " % ex)
     
     def getForName(self, name):
-        descriptor = self.models[name]
-        if not descriptor:
-            raise AssertionError(
-                "Model was not registered: %s." % name)
-        return descriptor
+        return self.models.get(name, None)
     
     def getForModel(self, model):
-        descriptor = self.descriptors[model]
-        if not descriptor:
-            raise AssertionError(
-                "Model was not registered: %s." % model)
-        return descriptor
+        return self.descriptors.get(model, None)
     
     def getJomInstance(self, instance):
         return JomInstance(
@@ -170,6 +162,7 @@ class JomDescriptor(object):
         # Init jom_fields
         from jom import fields as jomFields
         self.jom_fields = dict(self.force_jom_fields)
+        self.related = {}
         for field in model_fields:
             field_name = field.name
 
@@ -186,9 +179,11 @@ class JomDescriptor(object):
                 self.jom_fields[field_name] = jomFields.StringJomField
             elif isinstance(field, ForeignKey):
                 # FK
+                self.related[field_name] = field.rel.to
                 self.jom_fields[field_name] = jomFields.ForeignKeyJomField
             elif isinstance(field, ManyToManyField):
                 # TODO(msama): handle M2M
+                self.related[field_name] = field.rel.to
                 self.jom_fields[field_name] = jomFields.StringJomField
             elif isinstance(field, (AutoField, IntegerField, FloatField)):
                 # Numeral field    
@@ -220,7 +215,19 @@ class JomClass(JomEntry):
         fields = {}
         for name, fieldClazz in self.descriptor.jom_fields.items():
             readonly = True if name in self.descriptor.readonly else False
-            fields[name] = fieldClazz.renderField(clazz, name, readonly)
+            from jom.fields import ForeignKeyJomField
+            if issubclass(fieldClazz, ForeignKeyJomField):
+                related = self.descriptor.related.get(name, None)
+                if related:
+                    fk_class = self.factory.getForModel(related).__class__.__name__
+                else:
+                    fk_class = None
+                fields[name] = fieldClazz.renderField(
+                        clazz, name, 
+                        fk_class,
+                        readonly)
+            else:
+                fields[name] = fieldClazz.renderField(clazz, name, readonly)
         dictionary['fields'] = fields
         
         return render_to_string(

@@ -213,10 +213,11 @@ class ForeignKeyJomField(JomField):
         return self.value.id
 
     @classmethod
-    def renderField(self, clazz, name, readonly = False):
+    def renderField(self, clazz, name, fk_clazz, readonly = False):
         dictionary = {
                 'clazz': clazz,
                 'name': name,
+                'fk_clazz': fk_clazz,
                 'readonly': readonly
                 }
         
