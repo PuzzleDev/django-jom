@@ -31,13 +31,13 @@ class Command(BaseCommand):
             # setting the JOM_ROOT variable and adding it to
             # settings.STATICFILES_DIRS
             base_path = settings.JOM_ROOT
-        folder = os.path.join(base_path, "js/jom/descriptors").replace("\\","/")
+        folder = os.path.join(base_path, "jom/js/descriptors").replace("\\","/")
         
         for model, jomDescriptor in factory.descriptors.items():
             # get the django module name
             app_name = model.__module__.split(".")[::-1][1]
             app_folder = os.path.join(folder, app_name).replace("\\","/")
-            filename = os.path.join(app_folder, jomDescriptor.__name__ + ".js").replace("\\","/")
+            filename = os.path.join(app_folder, jomDescriptor.__class__.__name__ + ".js").replace("\\","/")
             ensure_dir(filename)
             print("[JOM] Generating " + filename)
             out_file = open(filename,"w")
