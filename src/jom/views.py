@@ -50,10 +50,7 @@ def jom_async_create_ajax(request):
                 "Permission denied for user %s." %
                 request.user)
         
-    # TODO(msama): implement this feature
-    raise NotImplementedError()
-    instance = descriptor.model.objects.create(values)
-    
+    instance = descriptor.model()    
     jomInstance = factory.getJomInstance(instance)
     jomInstance.update(values)
     return {}
