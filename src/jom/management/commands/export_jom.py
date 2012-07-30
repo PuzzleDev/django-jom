@@ -16,7 +16,7 @@ from jom.utils import ensure_dir
 class Command(BaseCommand):
     """ Generate all the Jom files
     """
-    help = 'Removes all the uploaded files which are not saved in the database'
+    help = 'Generate all the Jom files'
 
     def handle(self, *args, **options):
         JomFactory.autodiscover()

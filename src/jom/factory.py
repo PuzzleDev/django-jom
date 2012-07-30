@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.fields import CharField, IntegerField, FloatField,\
     NullBooleanField, DateTimeField, TimeField, AutoField, BooleanField,\
-    TextField
+    TextField, DateField
 from django.db.models.fields.files import FileField
 from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.template.base import Template
@@ -34,6 +34,7 @@ class JomFactory(object):
             desc_instance = descriptor()
             self.descriptors[descriptor.model] = desc_instance
             self.models[descriptor.model.__name__]= desc_instance
+            return desc_instance
         else:
             raise AssertionError(
                     "JomEntry %s was already registered" % descriptor) 
@@ -68,23 +69,7 @@ class JomFactory(object):
         
     def getJomClass(self, model):
         return JomClass(self.getForModel(model))
-    
-    def saveJom(self, dictValues):
-        model_name = dictValues.get('model', None)
-        if model_name == None:
-            raise ValueError("Model cannot be None")
-        descriptor = self.models[model_name]
-        if descriptor == None:
-            raise ValueError(
-                    "Descriptor for model %s was not registered" % 
-                    model_name)
-        instance = descriptor.model.objects.get(
-                id = dictValues.get("id"))
-        
-        jomInstance = self.getJomInstance(instance)
-        jomInstance.update(dictValues)
-        return jomInstance
-             
+
 
 class JomDescriptor(object):
     """ Describe a Jom node.
@@ -125,6 +110,33 @@ class JomDescriptor(object):
     """
     template = "jom/JomClass.js"
     
+    def canUpdate(self, request):
+        """ State if the given request has permission to
+            update the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return True
+    
+    def canCreate(self, request):
+        """ State if the given request has permission to
+            create the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return True
+    
+    def canDelete(self, request):
+        """ State if the given request has permission to
+            delete the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return True
+    
     def __init__(self):
         if self.model == None:
             # model cannot be null
@@ -140,7 +152,7 @@ class JomDescriptor(object):
             model_fields = self.model._meta.fields
         if self.exclude != None:
             model_fields = [x
-                    for x in self.model_fields
+                    for x in model_fields
                     if x.name not in self.exclude]
         
         if self.template == None:
@@ -188,7 +200,7 @@ class JomDescriptor(object):
             elif isinstance(field, (AutoField, IntegerField, FloatField)):
                 # Numeral field    
                 self.jom_fields[field_name] = jomFields.NumeralJomField
-            elif isinstance(field, (DateTimeField, TimeField, DateTimeField)):
+            elif isinstance(field, (DateTimeField, TimeField, DateField)):
                 # Numeral field
                 self.jom_fields[field_name] = jomFields.DateJomField
             else:
@@ -255,12 +267,12 @@ class JomInstance(JomEntry):
                         )
     
     def toDict(self):
-        dictionary = {'clazz': self.descriptor.__class__.__name__,
-                      'fields': self.jom_fields
-                      }
+        dictionary = {
+                'clazz': self.descriptor.__class__.__name__,
+                'fields': self.jom_fields
+                }
         return dictionary
 
-    
     def toJavascript(self):
         t = Template("{{% for key, fieldInstance in fields.items %}\n" +
                      "'{{ key }}': {{ fieldInstance.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")

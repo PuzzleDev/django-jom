@@ -31,7 +31,7 @@
 	this.init(config);
 };
 
-{% block save %}/**
+{% block backend %}/**
  * Export to a data map.
  */
 {{ clazz }}.prototype.toMap = function() {
@@ -91,7 +91,68 @@ var {{ clazz|capital }}_ASYNC_SAVE_URL = '/jom/save/';
     		errorCallback("The server was unreachable.");
     	}
 	});
-};{% endblock %}
+};
+
+var {{ clazz|capital }}_ASYNC_CREATE_URL = '/jom/create/';
+
+/**
+ * Delete the instance on the server.
+ * 
+ * @callback successCallback()
+ * @callback errorCallback(message)
+ */
+{{ clazz }}.prototype.asyncCreate = function(successCallback, errorCallback) {	
+	$.ajax({
+    	url: {{ clazz|capital }}_ASYNC_CREATE_URL,
+    	data: this.toMap(),
+    	dataType: 'json',
+    	type: 'POST',
+    	traditional: true,
+    	success: function(jsonResponse) { 
+    		if (jsonResponse.result == true) {
+    			successCallback()
+    		} else {
+    			errorCallback(jsonResponse.message)
+    		}
+    	},
+    	error: function() { 
+    		errorCallback("The server was unreachable.");
+    	}
+	});
+};
+
+var {{ clazz|capital }}_ASYNC_DELETE_URL = '/jom/delete/';
+
+/**
+ * Delete the instance on the server.
+ * 
+ * @callback successCallback()
+ * @callback errorCallback(message)
+ */
+{{ clazz }}.prototype.asyncDelete = function(successCallback, errorCallback) {
+	var postData = {};
+	postData['model'] = '{{ model }}';
+	postData['id'] = this.getId();
+	
+	$.ajax({
+    	url: {{ clazz|capital }}_ASYNC_DELETE_URL,
+    	data: postData,
+    	dataType: 'json',
+    	type: 'POST',
+    	traditional: true,
+    	success: function(jsonResponse) { 
+    		if (jsonResponse.result == true) {
+    			successCallback()
+    		} else {
+    			errorCallback(jsonResponse.message)
+    		}
+    	},
+    	error: function() { 
+    		errorCallback("The server was unreachable.");
+    	}
+	});
+};
+{% endblock %}
 
 {% block jom_deg_accessor %}
 {% for name, fieldJs in fields.items %}{{ fieldJs }}
