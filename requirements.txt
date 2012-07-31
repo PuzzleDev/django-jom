@@ -1,4 +1,2 @@
 django
-MySQL-python
-#-e git://github.com/msama/django-jom.git#egg=src/django-puzzledev-jom
--e /home/rax/git/django-jom/src
+-e git://github.com/msama/django-jom.git#egg=django-puzzledev-jom
