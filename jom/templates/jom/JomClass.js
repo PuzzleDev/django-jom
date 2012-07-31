@@ -77,7 +77,7 @@
  */
 {{ clazz }}.prototype.asyncUpdate = function(successCallback, errorCallback) {
 	$.ajax({
-    	url: {{ clazz|capital }}_ASYNC_SAVE_URL,
+    	url: {{ clazz|capital }}_ASYNC_UPDATE_URL,
     	data: this.toMap(),
     	dataType: 'json',
     	type: 'POST',

@@ -13,6 +13,7 @@ from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.template.base import Template
 from django.template.context import Context
 from django.template.loader import render_to_string
+from django.db.models.base import Model
 
 
 class JomFactory(object):
@@ -266,17 +267,26 @@ class JomInstance(JomEntry):
                         factory = self.factory
                         )
     
-    def toDict(self):
+    def instanceToDict(self):
+        dictionary = {}
+        for field_name in self.descriptor.jom_fields.keys():
+            value = getattr(self.instance, field_name)
+            if isinstance(value, Model):
+                value = value.pk
+            # TODO(msama): handle m2m
+            dictionary[field_name] = value
+        
+        return dictionary
+
+    def toJavascript(self):
         dictionary = {
                 'clazz': self.descriptor.__class__.__name__,
                 'fields': self.jom_fields
                 }
-        return dictionary
-
-    def toJavascript(self):
+        
         t = Template("{{% for key, fieldInstance in fields.items %}\n" +
                      "'{{ key }}': {{ fieldInstance.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")
-        c = Context(self.toDict())
+        c = Context(dictionary)
         return t.render(c)
     
     def update(self, dictValues):

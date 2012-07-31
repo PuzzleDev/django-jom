@@ -53,7 +53,7 @@ def jom_async_create_ajax(request):
     instance = descriptor.model()    
     jomInstance = factory.getJomInstance(instance)
     jomInstance.update(values)
-    return {'config': jomInstance.toDict()}
+    return {'config': jomInstance.instanceToDict()}
     
     
 @AjaxResponse()

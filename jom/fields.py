@@ -106,7 +106,8 @@ class StringJomField(JomField):
     
     def toJavascript(self):
         # TODO(msama): handle tabs and new lines
-        return safe("\"%s\"" % self.value.replace("\"", "\\\""))
+        value = self.value if self.value else ""
+        return safe("\"%s\"" % value.replace("\"", "\\\""))
     
 
 class JavascriptJomField(JomField):
