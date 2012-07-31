@@ -8,7 +8,7 @@ from jom.ajax import AjaxResponse
 from jom.factory import JomFactory
 
 @AjaxResponse()
-def jom_async_save_ajax(request):
+def jom_async_update_ajax(request):
     values = request.POST.dict()
     print values
     factory = JomFactory.default()
@@ -45,7 +45,7 @@ def jom_async_create_ajax(request):
                     "Descriptor for model %s was not registered" % 
                     model)
             
-    if not descriptor.canSave(request):
+    if not descriptor.canCreate(request):
         raise ValueError(
                 "Permission denied for user %s." %
                 request.user)
@@ -53,7 +53,7 @@ def jom_async_create_ajax(request):
     instance = descriptor.model()    
     jomInstance = factory.getJomInstance(instance)
     jomInstance.update(values)
-    return {}
+    return {'config': jomInstance.toDict()}
     
     
 @AjaxResponse()

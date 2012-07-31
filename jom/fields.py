@@ -8,6 +8,7 @@ from django.template.defaultfilters import safe
 from django.db.models.base import Model
 from jom import factory as jom_factory
 from django.template.loader import render_to_string
+from types import NoneType
 
 class JomField(object):
     """ Define the base class for a field.
@@ -74,7 +75,7 @@ class NumeralJomField(JomField):
     def __init__(self, instance, name, readonly = False,
                  factory = jom_factory.JomFactory.default()):
         value = getattr(instance, name)
-        if not isinstance(value, (int, long, float)):
+        if not isinstance(value, (int, long, float, NoneType)):
             raise AssertionError(
                 "Value should be a number. Found: %s." % value)
         super(NumeralJomField, self).__init__(instance, name, readonly, factory)
@@ -94,7 +95,7 @@ class StringJomField(JomField):
     def __init__(self, instance, name, readonly = False,
             factory = jom_factory.JomFactory.default()):
         value = getattr(instance, name)
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, (str, unicode, NoneType)):
             value = getattr(instance, name)
             raise AssertionError(
                 "Value should be a string. Found: %s." % value)
@@ -179,22 +180,31 @@ class DateJomField(JomField):
 class ForeignKeyJomField(JomField):
     def __init__(self, instance, name, readonly = False,
             factory = jom_factory.JomFactory.default()):
-        value = getattr(instance, name)
-        if not isinstance(value, Model):
+        
+        for f in instance._meta.fields:
+            if f.name == name: 
+                self.related = f.rel.to
+        if self.related == None:
             raise AssertionError(
-                "Value should be a Model. Found: %s." % value)
+                "name should be a related field")
+                
         super(ForeignKeyJomField, self).__init__(instance, name, readonly, factory)
     
     def getValue(self):
-        return getattr(self.instance, self.name)
+        try:
+            return getattr(self.instance, self.name)
+        except self.related.DoesNotExist:
+            return None
     
     def setValue(self, value):
         if value == None:
             setattr(self.instance, self.name, None)
-        elif isinstance(value, (int, str, unicode)):
-            # We have received the id.
-            # The FK has not been changed
-            pass
+        elif isinstance(value, int):
+            setattr(self.instance, self.name,
+                    self.related.objects.get(id = value))
+        elif isinstance(value, (str, unicode)):
+            setattr(self.instance, self.name,
+                    self.related.objects.get(id = int(value)))
         elif isinstance(value, Model):
             setattr(self.instance, self.name, value)
         elif isinstance(value, dict):
