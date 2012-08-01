@@ -111,6 +111,15 @@ class JomDescriptor(object):
     """
     template = "jom/JomClass.js"
     
+    def canGet(self, request):
+        """ State if the given request has permission to
+            get the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return False
+    
     def canUpdate(self, request):
         """ State if the given request has permission to
             update the instance.
@@ -118,7 +127,7 @@ class JomDescriptor(object):
             Derived classes should override this method
             with their logic. 
         """
-        return True
+        return False
     
     def canCreate(self, request):
         """ State if the given request has permission to
@@ -127,7 +136,7 @@ class JomDescriptor(object):
             Derived classes should override this method
             with their logic. 
         """
-        return True
+        return False
     
     def canDelete(self, request):
         """ State if the given request has permission to
@@ -136,7 +145,7 @@ class JomDescriptor(object):
             Derived classes should override this method
             with their logic. 
         """
-        return True
+        return False
     
     def __init__(self):
         if self.model == None:

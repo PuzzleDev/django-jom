@@ -201,5 +201,6 @@
 	});
 };
 
+{% block factory_extra_def %}{% endblock %}
 var singleton{{ clazz }}Factory = new {{ clazz }}Factory();
 {% endblock %}
