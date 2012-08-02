@@ -33,7 +33,7 @@ def register_instance(instance):
         raise AssertionError(
                 "Model not registered: %s" % instance.__class__)
     return {'jomInstance': jomInstance,
-            'clazz': jomInstance.__class__.__name__,
+            'clazz': jomInstance.descriptor.__class__.__name__,
             'instance': instance}
 
 
