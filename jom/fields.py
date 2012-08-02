@@ -126,7 +126,10 @@ class JavascriptJomField(JomField):
         return self.value
     
     def toJavascript(self):
-        return self.value
+        if self.value:
+            return self.value
+        else:
+            return "{}"
     
 
 class UrlJomField(JomField):
@@ -139,7 +142,9 @@ class UrlJomField(JomField):
         
     def getValue(self):
         filefield = getattr(self.instance, self.name)
-        if filefield.name != None:
+        if filefield == None:
+            return ""
+        elif filefield.name != None:
             return filefield.url
         else:
             return ""
@@ -154,7 +159,6 @@ class UrlJomField(JomField):
         return self.getValue()
     
     def toJavascript(self):
-        # TODO(msama): handle tabs and new lines
         return safe("\"%s\"" % self.getValue())
 
 
