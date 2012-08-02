@@ -120,7 +120,7 @@ class JavascriptJomField(JomField):
         if not isinstance(value, (str, unicode)):
             raise AssertionError(
                 "Value should be a string. Found: %s." % value)
-        super(StringJomField, self).__init__(instance, name, readonly, factory)
+        super(JavascriptJomField, self).__init__(instance, name, readonly, factory)
         
     def toString(self):
         return self.value
