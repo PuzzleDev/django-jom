@@ -141,12 +141,13 @@ class UrlJomField(JomField):
         super(UrlJomField, self).__init__(instance, name, readonly, factory)
         
     def getValue(self):
-        filefield = getattr(self.instance, self.name)
-        if filefield == None:
-            return ""
-        elif filefield.name != None:
-            return filefield.url
-        else:
+        try:
+            filefield = getattr(self.instance, self.name)
+            if filefield.name != None:
+                return filefield.url
+            else:
+                return ""
+        except ValueError:
             return ""
     
     def setValue(self, value):
