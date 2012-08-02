@@ -151,11 +151,11 @@ class UrlJomField(JomField):
     value = property(getValue, setValue)
         
     def toString(self):
-        return self.value
+        return self.getValue()
     
     def toJavascript(self):
         # TODO(msama): handle tabs and new lines
-        return safe("\"%s\"" % self.value)
+        return safe("\"%s\"" % self.getValue())
 
 
 class DateJomField(JomField):
