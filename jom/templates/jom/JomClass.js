@@ -10,14 +10,14 @@
  
 {{ clazz }} = function(config) {
 	/* Fields */
-	this.fields = new Array();{% for name in fields.keys %}
+	this.fields = {};{% for name in fields.keys %}
 	this.fields['{{ name }}'] = undefined;{% endfor %}
 	
 	// Foreign keys
-	this.fk = new Array();
+	this.fk = {};
 	
 	// m2m keys
-	this.m2m = new Array();
+	this.m2m = {};
 	
 	this.init = function(config) {
 		for(var key in config) {
