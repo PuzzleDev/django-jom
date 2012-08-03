@@ -7,12 +7,13 @@ from django.conf import settings
 from django.db import models
 from django.db.models.fields import CharField, IntegerField, FloatField,\
     NullBooleanField, DateTimeField, TimeField, AutoField, BooleanField,\
-    TextField
+    TextField, DateField
 from django.db.models.fields.files import FileField
 from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.template.base import Template
 from django.template.context import Context
 from django.template.loader import render_to_string
+from django.db.models.base import Model
 
 
 class JomFactory(object):
@@ -34,6 +35,7 @@ class JomFactory(object):
             desc_instance = descriptor()
             self.descriptors[descriptor.model] = desc_instance
             self.models[descriptor.model.__name__]= desc_instance
+            return desc_instance
         else:
             raise AssertionError(
                     "JomEntry %s was already registered" % descriptor) 
@@ -68,23 +70,7 @@ class JomFactory(object):
         
     def getJomClass(self, model):
         return JomClass(self.getForModel(model))
-    
-    def saveJom(self, dictValues):
-        model_name = dictValues.get('model', None)
-        if model_name == None:
-            raise ValueError("Model cannot be None")
-        descriptor = self.models[model_name]
-        if descriptor == None:
-            raise ValueError(
-                    "Descriptor for model %s was not registered" % 
-                    model_name)
-        instance = descriptor.model.objects.get(
-                id = dictValues.get("id"))
-        
-        jomInstance = self.getJomInstance(instance)
-        jomInstance.update(dictValues)
-        return jomInstance
-             
+
 
 class JomDescriptor(object):
     """ Describe a Jom node.
@@ -125,6 +111,42 @@ class JomDescriptor(object):
     """
     template = "jom/JomClass.js"
     
+    def canGet(self, request):
+        """ State if the given request has permission to
+            get the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return False
+    
+    def canUpdate(self, request):
+        """ State if the given request has permission to
+            update the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return False
+    
+    def canCreate(self, request):
+        """ State if the given request has permission to
+            create the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return False
+    
+    def canDelete(self, request):
+        """ State if the given request has permission to
+            delete the instance.
+            
+            Derived classes should override this method
+            with their logic. 
+        """
+        return False
+    
     def __init__(self):
         if self.model == None:
             # model cannot be null
@@ -140,7 +162,7 @@ class JomDescriptor(object):
             model_fields = self.model._meta.fields
         if self.exclude != None:
             model_fields = [x
-                    for x in self.model_fields
+                    for x in model_fields
                     if x.name not in self.exclude]
         
         if self.template == None:
@@ -188,7 +210,7 @@ class JomDescriptor(object):
             elif isinstance(field, (AutoField, IntegerField, FloatField)):
                 # Numeral field    
                 self.jom_fields[field_name] = jomFields.NumeralJomField
-            elif isinstance(field, (DateTimeField, TimeField, DateTimeField)):
+            elif isinstance(field, (DateTimeField, TimeField, DateField)):
                 # Numeral field
                 self.jom_fields[field_name] = jomFields.DateJomField
             else:
@@ -254,17 +276,26 @@ class JomInstance(JomEntry):
                         factory = self.factory
                         )
     
-    def toDict(self):
-        dictionary = {'clazz': self.descriptor.__class__.__name__,
-                      'fields': self.jom_fields
-                      }
+    def instanceToDict(self):
+        dictionary = {}
+        for field_name in self.descriptor.jom_fields.keys():
+            value = getattr(self.instance, field_name)
+            if isinstance(value, Model):
+                value = value.pk
+            # TODO(msama): handle m2m
+            dictionary[field_name] = value
+        
         return dictionary
 
-    
     def toJavascript(self):
+        dictionary = {
+                'clazz': self.descriptor.__class__.__name__,
+                'fields': self.jom_fields
+                }
+        
         t = Template("{{% for key, fieldInstance in fields.items %}\n" +
                      "'{{ key }}': {{ fieldInstance.toJavascript }}{% if not forloop.last %},{% endif %}{% endfor %}}")
-        c = Context(self.toDict())
+        c = Context(dictionary)
         return t.render(c)
     
     def update(self, dictValues):
